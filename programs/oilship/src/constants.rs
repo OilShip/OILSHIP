@@ -31,3 +31,30 @@ pub const MAX_TOLL_BPS: u16 = 100;
 pub const DEFAULT_FUND_SPLIT_BPS: u16 = 6_000; // 60% -> wreck fund
 pub const DEFAULT_BUYBACK_SPLIT_BPS: u16 = 3_000; // 30% -> $OIL buyback
 pub const DEFAULT_OPS_SPLIT_BPS: u16 = 1_000; // 10% -> operations
+
+/// Risk thresholds. The monitoring engine writes risk scores into the
+/// Bridge account; routing decisions are taken by comparing the score
+/// against these thresholds.
+pub const RISK_TIER_1_MAX: u8 = 30;
+pub const RISK_TIER_2_MAX: u8 = 55;
+pub const RISK_TIER_3_MAX: u8 = 80;
+pub const RISK_QUARANTINE_MIN: u8 = 81;
+
+/// Maximum number of bridges the registry will hold at once.
+pub const MAX_REGISTERED_BRIDGES: usize = 64;
+
+/// Maximum length of human-readable identifiers anchored on chain.
+pub const MAX_NAME_LEN: usize = 48;
+pub const MAX_SYMBOL_LEN: usize = 12;
+pub const MAX_URL_LEN: usize = 96;
+
+/// A policy can never cover more cargo than this hard cap, regardless of
+/// available wreck fund balance. Single-policy concentration risk.
+pub const MAX_POLICY_CARGO_LAMPORTS: u64 = 250_000 * LAMPORTS_PER_SOL;
+
+/// Lower bound on a policy. Anything smaller is not worth the rent.
+pub const MIN_POLICY_CARGO_LAMPORTS: u64 = LAMPORTS_PER_SOL / 100; // 0.01 SOL
+
+/// Lamports in a SOL, hard-coded so we never depend on a foreign module
+/// at the BPF layer.
+pub const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
