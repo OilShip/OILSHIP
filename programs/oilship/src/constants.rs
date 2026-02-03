@@ -58,3 +58,31 @@ pub const MIN_POLICY_CARGO_LAMPORTS: u64 = LAMPORTS_PER_SOL / 100; // 0.01 SOL
 /// Lamports in a SOL, hard-coded so we never depend on a foreign module
 /// at the BPF layer.
 pub const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
+
+/// Minimum number of slots a policy must remain open before it can be
+/// settled. Stops a holder from gaming the toll calculation.
+pub const MIN_POLICY_SLOTS: u64 = 4;
+
+/// Maximum lifetime of a policy in slots. After this, the policy is
+/// considered abandoned and the wreck fund treats it as expired.
+pub const MAX_POLICY_SLOTS: u64 = 432_000; // ~2 days at 400ms/slot
+
+/// Per-block ceiling on the number of policies a single bridge can host.
+/// Protects against a single compromised bridge eating the entire fund.
+pub const MAX_POLICIES_PER_BRIDGE_PER_BLOCK: u32 = 32;
+
+/// Wreck fund must always retain this minimum reserve ratio against
+/// the sum of open policy coverage. Below this, the fund stops issuing
+/// new policies until it is replenished.
+pub const MIN_RESERVE_RATIO_BPS: u16 = 1_500; // 15%
+
+/// Convoy batching window. Transits opened within the same window are
+/// grouped into a single convoy account.
+pub const CONVOY_WINDOW_SLOTS: u64 = 30;
+
+/// Discriminator length used by Anchor for every account.
+pub const DISCRIMINATOR_LEN: usize = 8;
+
+/// Re-exported `Pubkey` so other modules can `use crate::constants::*`
+/// without dragging in `anchor_lang`.
+pub use anchor_lang::prelude::Pubkey;
