@@ -71,3 +71,57 @@ pub struct BridgeQuarantined {
     pub coverage_at_quarantine: u64,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct QuarantineLifted {
+    pub bridge: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct WreckFundDeposit {
+    pub depositor: Pubkey,
+    pub amount: u64,
+    pub new_balance: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct ConvoyOpened {
+    pub convoy: Pubkey,
+    pub bridge: Pubkey,
+    pub opens_at_slot: u64,
+    pub closes_at_slot: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct PausedToggled {
+    pub paused: bool,
+    pub admin: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct AdminTransferred {
+    pub previous_admin: Pubkey,
+    pub new_admin: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct ConfigUpdated {
+    pub field: String,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct ThroughputThrottled {
+    pub bridge: Pubkey,
+    pub slot: u64,
+    pub policies_in_slot: u32,
+}
+
+pub fn now_ts() -> Result<i64> {
+    Ok(Clock::get()?.unix_timestamp)
+}
