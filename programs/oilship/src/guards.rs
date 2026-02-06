@@ -79,3 +79,38 @@ pub fn check_throughput(bridge: &Bridge, now_slot: u64) -> Result<()> {
     }
     Ok(())
 }
+
+pub fn check_reserve_ratio(reserve: u64, current_open: u64, delta: u64) -> Result<()> {
+    let new_open = current_open
+        .checked_add(delta)
+        .ok_or(OilshipError::MathOverflow)?;
+    if new_open == 0 {
+        return Ok(());
+    }
+    let ratio = (reserve as u128 * BPS_DENOM as u128) / new_open as u128;
+    if (ratio as u64) < MIN_RESERVE_RATIO_BPS as u64 {
+        return err!(OilshipError::ReserveRatioBreach);
+    }
+    Ok(())
+}
+
+pub fn check_str_len(s: &str, max: usize) -> Result<()> {
+    if s.is_empty() || s.len() > max {
+        return err!(OilshipError::InvalidBridgeName);
+    }
+    Ok(())
+}
+
+pub fn check_admin(cfg: &GlobalConfig, signer: Pubkey) -> Result<()> {
+    if cfg.admin != signer {
+        return err!(OilshipError::NotAdmin);
+    }
+    Ok(())
+}
+
+pub fn check_operator(bridge: &Bridge, signer: Pubkey) -> Result<()> {
+    if bridge.operator != signer {
+        return err!(OilshipError::NotBridgeOperator);
+    }
+    Ok(())
+}
