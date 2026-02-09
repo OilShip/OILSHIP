@@ -129,3 +129,130 @@ pub fn register_bridge_handler(ctx: Context<RegisterBridge>, params: RegisterBri
     msg!("bridge registered: {}", params.symbol);
     Ok(())
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct UpdateRiskParams {
+    pub score: u8,
+}
+
+#[derive(Accounts)]
+pub struct UpdateRisk<'info> {
+    pub operator: Signer<'info>,
+    #[account(mut)]
+    pub bridge: Account<'info, Bridge>,
+}
+
+pub fn update_risk_handler(ctx: Context<UpdateRisk>, params: UpdateRiskParams) -> Result<()> {
+    if params.score > 100 {
+        return err!(OilshipError::InvalidRiskScore);
+    }
+    let bridge = &mut ctx.accounts.bridge;
+    if bridge.operator != ctx.accounts.operator.key() {
+        return err!(OilshipError::NotBridgeOperator);
+    }
+    if bridge.quarantined {
+        return err!(OilshipError::BridgeQuarantined);
+    }
+    bridge.risk_score = params.score;
+    bridge.tier = match params.score {
+        0..=RISK_TIER_1_MAX => 1,
+        v if v <= RISK_TIER_2_MAX => 2,
+        v if v <= RISK_TIER_3_MAX => 3,
+        _ => 4,
+    };
+    bridge.routable = bridge.tier <= 3;
+    bridge.last_update_slot = Clock::get()?.slot;
+    if params.score >= RISK_QUARANTINE_MIN {
+        bridge.quarantined = true;
+        bridge.routable = false;
+        bridge.quarantine_count = bridge.quarantine_count.saturating_add(1);
+        msg!("bridge quarantined at score {}", params.score);
+    }
+    Ok(())
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct OpenPolicyParams {
+    pub cargo: u64,
+    pub lifetime_slots: u64,
+    pub seed: u64,
+}
+
+#[derive(Accounts)]
+#[instruction(params: OpenPolicyParams)]
+pub struct OpenPolicy<'info> {
+    #[account(mut)]
+    pub beneficiary: Signer<'info>,
+    #[account(seeds = [SEED_CONFIG], bump = config.bump)]
+    pub config: Account<'info, GlobalConfig>,
+    #[account(mut)]
+    pub bridge: Account<'info, Bridge>,
+    #[account(mut, seeds = [SEED_WRECK_FUND], bump = wreck_fund.bump)]
+    pub wreck_fund: Account<'info, WreckFund>,
+    #[account(mut, seeds = [SEED_TREASURY], bump = treasury.bump)]
+    pub treasury: Account<'info, Treasury>,
+    #[account(
+        init,
+        payer = beneficiary,
+        space = Policy::LEN,
+        seeds = [SEED_POLICY, beneficiary.key().as_ref(), bridge.key().as_ref(), &params.seed.to_le_bytes()],
+        bump,
+    )]
+    pub policy: Account<'info, Policy>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn open_policy_handler(ctx: Context<OpenPolicy>, params: OpenPolicyParams) -> Result<()> {
+    let cfg = &ctx.accounts.config;
+    if cfg.paused {
+        return err!(OilshipError::Paused);
+    }
+    if params.cargo < MIN_POLICY_CARGO_LAMPORTS {
+        return err!(OilshipError::CargoTooSmall);
+    }
+    if params.cargo > MAX_POLICY_CARGO_LAMPORTS {
+        return err!(OilshipError::CargoTooLarge);
+    }
+    if params.lifetime_slots < MIN_POLICY_SLOTS {
+        return err!(OilshipError::PolicyTooShort);
+    }
+    if params.lifetime_slots > MAX_POLICY_SLOTS {
+        return err!(OilshipError::PolicyTooLong);
+    }
+    let bridge = &mut ctx.accounts.bridge;
+    if bridge.quarantined || !bridge.routable {
+        return err!(OilshipError::BridgeQuarantined);
+    }
+    let now_slot = Clock::get()?.slot;
+    if bridge.throughput_slot != now_slot {
+        bridge.throughput_slot = now_slot;
+        bridge.throughput_count = 0;
+    }
+    if bridge.throughput_count >= MAX_POLICIES_PER_BRIDGE_PER_BLOCK {
+        return err!(OilshipError::ThroughputExceeded);
+    }
+    bridge.throughput_count = bridge.throughput_count.saturating_add(1);
+
+    let base_toll = compute_toll(params.cargo, cfg.toll_bps)?;
+    let toll_paid = apply_risk_multiplier(base_toll, bridge.risk_score)?;
+
+    let fund = &mut ctx.accounts.wreck_fund;
+    let new_open = safe_add(fund.open_coverage, params.cargo)?;
+    let ratio = reserve_ratio_bps(fund.balance, new_open);
+    if ratio < MIN_RESERVE_RATIO_BPS {
+        return err!(OilshipError::ReserveRatioBreach);
+    }
+
+    let (fund_share, buyback_share, ops_share) = split_toll(
+        toll_paid,
+        cfg.fund_split_bps,
+        cfg.buyback_split_bps,
+        cfg.ops_split_bps,
+    )?;
+
+    let cpi_accounts = system_program::Transfer {
+        from: ctx.accounts.beneficiary.to_account_info(),
+        to: ctx.accounts.wreck_fund.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), cpi_accounts);
+    system_program::transfer(cpi_ctx, fund_share)?;
