@@ -256,3 +256,136 @@ pub fn open_policy_handler(ctx: Context<OpenPolicy>, params: OpenPolicyParams) -
     };
     let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), cpi_accounts);
     system_program::transfer(cpi_ctx, fund_share)?;
+
+    let treasury_share = safe_add(buyback_share, ops_share)?;
+    let cpi_accounts = system_program::Transfer {
+        from: ctx.accounts.beneficiary.to_account_info(),
+        to: ctx.accounts.treasury.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), cpi_accounts);
+    system_program::transfer(cpi_ctx, treasury_share)?;
+
+    fund.balance = safe_add(fund.balance, fund_share)?;
+    fund.open_coverage = new_open;
+
+    let treasury = &mut ctx.accounts.treasury;
+    treasury.balance = safe_add(treasury.balance, treasury_share)?;
+    treasury.lifetime_in = safe_add(treasury.lifetime_in, treasury_share)?;
+
+    bridge.open_policies = bridge.open_policies.saturating_add(1);
+    bridge.open_coverage = safe_add(bridge.open_coverage, params.cargo)?;
+    bridge.lifetime_tolls = safe_add(bridge.lifetime_tolls, toll_paid)?;
+
+    let policy = &mut ctx.accounts.policy;
+    policy.beneficiary = ctx.accounts.beneficiary.key();
+    policy.bridge = bridge.key();
+    policy.convoy = Pubkey::default();
+    policy.cargo = params.cargo;
+    policy.toll_paid = toll_paid;
+    policy.risk_at_open = bridge.risk_score;
+    policy.class = VesselClass::from_cargo(params.cargo) as u8;
+    policy.opened_slot = now_slot;
+    policy.mature_slot = now_slot.saturating_add(MIN_POLICY_SLOTS);
+    policy.expires_slot = now_slot.saturating_add(params.lifetime_slots);
+    policy.state = PolicyState::Active as u8;
+    policy.bump = ctx.bumps.policy;
+
+    msg!("policy opened: cargo={} toll={}", params.cargo, toll_paid);
+    Ok(())
+}
+
+#[derive(Accounts)]
+pub struct SettlePolicy<'info> {
+    pub caller: Signer<'info>,
+    #[account(seeds = [SEED_CONFIG], bump = config.bump)]
+    pub config: Account<'info, GlobalConfig>,
+    #[account(mut)]
+    pub bridge: Account<'info, Bridge>,
+    #[account(mut, seeds = [SEED_WRECK_FUND], bump = wreck_fund.bump)]
+    pub wreck_fund: Account<'info, WreckFund>,
+    #[account(mut, constraint = policy.bridge == bridge.key() @ OilshipError::AccountMismatch)]
+    pub policy: Account<'info, Policy>,
+}
+
+pub fn settle_policy_handler(ctx: Context<SettlePolicy>) -> Result<()> {
+    let policy = &mut ctx.accounts.policy;
+    if PolicyState::from_u8(policy.state) != PolicyState::Active {
+        return err!(OilshipError::PolicyAlreadySettled);
+    }
+    let now = Clock::get()?.slot;
+    if now < policy.mature_slot {
+        return err!(OilshipError::PolicyNotMature);
+    }
+    if now > policy.expires_slot {
+        policy.state = PolicyState::Expired as u8;
+        return err!(OilshipError::PolicyExpired);
+    }
+    let fund = &mut ctx.accounts.wreck_fund;
+    fund.open_coverage = safe_sub(fund.open_coverage, policy.cargo)?;
+    let bridge = &mut ctx.accounts.bridge;
+    bridge.open_policies = bridge.open_policies.saturating_sub(1);
+    bridge.open_coverage = safe_sub(bridge.open_coverage, policy.cargo)?;
+    policy.state = PolicyState::Settled as u8;
+    let _ = ctx.accounts.config.policies_settled;
+    msg!("policy settled cleanly: cargo={}", policy.cargo);
+    Ok(())
+}
+
+#[derive(Accounts)]
+pub struct ClaimPayout<'info> {
+    #[account(mut)]
+    pub beneficiary: Signer<'info>,
+    #[account(mut, seeds = [SEED_CONFIG], bump = config.bump)]
+    pub config: Account<'info, GlobalConfig>,
+    #[account(mut)]
+    pub bridge: Account<'info, Bridge>,
+    #[account(mut, seeds = [SEED_WRECK_FUND], bump = wreck_fund.bump)]
+    pub wreck_fund: Account<'info, WreckFund>,
+    #[account(
+        mut,
+        constraint = policy.beneficiary == beneficiary.key() @ OilshipError::BeneficiaryMismatch,
+        constraint = policy.bridge == bridge.key() @ OilshipError::AccountMismatch,
+    )]
+    pub policy: Account<'info, Policy>,
+}
+
+pub fn claim_payout_handler(ctx: Context<ClaimPayout>) -> Result<()> {
+    let bridge = &ctx.accounts.bridge;
+    if !bridge.quarantined {
+        return err!(OilshipError::BridgeStillHealthy);
+    }
+    let policy = &mut ctx.accounts.policy;
+    if PolicyState::from_u8(policy.state) == PolicyState::Claimed {
+        return err!(OilshipError::AlreadyClaimed);
+    }
+    if PolicyState::from_u8(policy.state) == PolicyState::Settled {
+        return err!(OilshipError::PolicyAlreadySettled);
+    }
+    let payout = policy.cargo;
+    let fund = &mut ctx.accounts.wreck_fund;
+    if fund.balance < payout {
+        return err!(OilshipError::InsufficientReserve);
+    }
+    **fund.to_account_info().try_borrow_mut_lamports()? = fund
+        .to_account_info()
+        .lamports()
+        .checked_sub(payout)
+        .ok_or(OilshipError::MathUnderflow)?;
+    **ctx.accounts.beneficiary.to_account_info().try_borrow_mut_lamports()? = ctx
+        .accounts
+        .beneficiary
+        .to_account_info()
+        .lamports()
+        .checked_add(payout)
+        .ok_or(OilshipError::MathOverflow)?;
+    fund.balance = safe_sub(fund.balance, payout)?;
+    fund.open_coverage = safe_sub(fund.open_coverage, payout)?;
+    fund.lifetime_payouts = safe_add(fund.lifetime_payouts, payout)?;
+    fund.payout_count = fund.payout_count.saturating_add(1);
+    policy.state = PolicyState::Claimed as u8;
+    let cfg = &mut ctx.accounts.config;
+    cfg.lifetime_payouts = safe_add(cfg.lifetime_payouts, payout)?;
+    cfg.wreck_claims_paid = cfg.wreck_claims_paid.saturating_add(1);
+    msg!("wreck payout: {} lamports", payout);
+    Ok(())
+}
