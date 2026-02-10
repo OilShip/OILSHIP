@@ -389,3 +389,102 @@ pub fn claim_payout_handler(ctx: Context<ClaimPayout>) -> Result<()> {
     msg!("wreck payout: {} lamports", payout);
     Ok(())
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct DepositParams {
+    pub amount: u64,
+}
+
+#[derive(Accounts)]
+pub struct DepositFund<'info> {
+    #[account(mut)]
+    pub depositor: Signer<'info>,
+    #[account(mut, seeds = [SEED_WRECK_FUND], bump = wreck_fund.bump)]
+    pub wreck_fund: Account<'info, WreckFund>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn deposit_fund_handler(ctx: Context<DepositFund>, params: DepositParams) -> Result<()> {
+    if params.amount == 0 {
+        return err!(OilshipError::CargoTooSmall);
+    }
+    let cpi_accounts = system_program::Transfer {
+        from: ctx.accounts.depositor.to_account_info(),
+        to: ctx.accounts.wreck_fund.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), cpi_accounts);
+    system_program::transfer(cpi_ctx, params.amount)?;
+    let fund = &mut ctx.accounts.wreck_fund;
+    fund.balance = safe_add(fund.balance, params.amount)?;
+    fund.lifetime_deposits = safe_add(fund.lifetime_deposits, params.amount)?;
+    msg!("wreck fund deposit: {}", params.amount);
+    Ok(())
+}
+
+#[derive(Accounts)]
+pub struct SetPaused<'info> {
+    #[account(address = config.admin @ OilshipError::NotAdmin)]
+    pub admin: Signer<'info>,
+    #[account(mut, seeds = [SEED_CONFIG], bump = config.bump)]
+    pub config: Account<'info, GlobalConfig>,
+}
+
+pub fn set_paused_handler(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
+    ctx.accounts.config.paused = paused;
+    msg!("paused = {}", paused);
+    Ok(())
+}
+
+#[derive(Accounts)]
+pub struct LiftQuarantine<'info> {
+    #[account(address = config.admin @ OilshipError::NotAdmin)]
+    pub admin: Signer<'info>,
+    #[account(seeds = [SEED_CONFIG], bump = config.bump)]
+    pub config: Account<'info, GlobalConfig>,
+    #[account(mut)]
+    pub bridge: Account<'info, Bridge>,
+}
+
+pub fn lift_quarantine_handler(ctx: Context<LiftQuarantine>) -> Result<()> {
+    let bridge = &mut ctx.accounts.bridge;
+    bridge.quarantined = false;
+    bridge.routable = bridge.tier <= 3;
+    msg!("quarantine lifted: {}", bridge.symbol_str());
+    Ok(())
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct OpenConvoyParams {
+    pub seed: u64,
+}
+
+#[derive(Accounts)]
+#[instruction(params: OpenConvoyParams)]
+pub struct OpenConvoy<'info> {
+    #[account(mut)]
+    pub opener: Signer<'info>,
+    pub bridge: Account<'info, Bridge>,
+    #[account(
+        init,
+        payer = opener,
+        space = Convoy::LEN,
+        seeds = [SEED_CONVOY, bridge.key().as_ref(), &params.seed.to_le_bytes()],
+        bump,
+    )]
+    pub convoy: Account<'info, Convoy>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn open_convoy_handler(ctx: Context<OpenConvoy>, _params: OpenConvoyParams) -> Result<()> {
+    let now = Clock::get()?.slot;
+    let convoy = &mut ctx.accounts.convoy;
+    convoy.bridge = ctx.accounts.bridge.key();
+    convoy.opened_slot = now;
+    convoy.closed_slot = now.saturating_add(CONVOY_WINDOW_SLOTS);
+    convoy.policy_count = 0;
+    convoy.total_cargo = 0;
+    convoy.total_toll = 0;
+    convoy.bump = ctx.bumps.convoy;
+    msg!("convoy departing: window {} slots", CONVOY_WINDOW_SLOTS);
+    Ok(())
+}
