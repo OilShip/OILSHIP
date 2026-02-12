@@ -40,3 +40,40 @@ pub fn safe_add(a: u64, b: u64) -> Result<u64> {
 pub fn safe_sub(a: u64, b: u64) -> Result<u64> {
     a.checked_sub(b).ok_or_else(|| error!(OilshipError::MathUnderflow))
 }
+
+pub fn safe_div(numer: u64, denom: u64) -> Result<u64> {
+    if denom == 0 {
+        return err!(OilshipError::DivisionByZero);
+    }
+    Ok(numer / denom)
+}
+
+pub fn compute_toll(cargo: u64, toll_bps: u16) -> Result<u64> {
+    apply_bps(cargo, toll_bps)
+}
+
+pub fn split_toll(toll: u64, fund_bps: u16, buyback_bps: u16, ops_bps: u16) -> Result<(u64, u64, u64)> {
+    let total = fund_bps as u32 + buyback_bps as u32 + ops_bps as u32;
+    if total != BPS_DENOM as u32 {
+        return err!(OilshipError::InvalidSplit);
+    }
+    let buyback = apply_bps(toll, buyback_bps)?;
+    let ops = apply_bps(toll, ops_bps)?;
+    let fund = safe_sub(toll, safe_add(buyback, ops)?)?;
+    Ok((fund, buyback, ops))
+}
+
+pub fn risk_multiplier_bps(score: u8) -> u16 {
+    match score {
+        0..=20 => 9_500,
+        21..=40 => 10_000,
+        41..=60 => 11_500,
+        61..=80 => 13_500,
+        _ => 19_000,
+    }
+}
+
+pub fn apply_risk_multiplier(base_toll: u64, score: u8) -> Result<u64> {
+    let mult = risk_multiplier_bps(score);
+    apply_bps(base_toll, mult)
+}
