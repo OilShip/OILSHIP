@@ -77,3 +77,53 @@ pub fn apply_risk_multiplier(base_toll: u64, score: u8) -> Result<u64> {
     let mult = risk_multiplier_bps(score);
     apply_bps(base_toll, mult)
 }
+
+pub fn reserve_ratio_bps(reserve: u64, open_coverage: u64) -> u16 {
+    if open_coverage == 0 {
+        return BPS_DENOM as u16;
+    }
+    let ratio = (reserve as u128 * BPS_DENOM as u128) / open_coverage as u128;
+    if ratio >= u16::MAX as u128 {
+        u16::MAX
+    } else {
+        ratio as u16
+    }
+}
+
+pub fn slots_to_days(slots: u64) -> u64 { slots / 216_000 }
+pub fn days_to_slots(days: u64) -> u64 { days.saturating_mul(216_000) }
+
+pub fn check_capacity(reserve: u64, requested: u64) -> Result<()> {
+    if requested > reserve {
+        return err!(OilshipError::InsufficientReserve);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn apply_bps_basic() {
+        assert_eq!(apply_bps(1_000, 250).unwrap(), 25);
+        assert_eq!(apply_bps(1_000, 10_000).unwrap(), 1_000);
+        assert_eq!(apply_bps(0, 10_000).unwrap(), 0);
+    }
+    #[test]
+    fn split_toll_sums_back() {
+        let (fund, buyback, ops) = split_toll(1_000, 6_000, 3_000, 1_000).unwrap();
+        assert_eq!(fund + buyback + ops, 1_000);
+        assert_eq!(buyback, 300);
+        assert_eq!(ops, 100);
+        assert_eq!(fund, 600);
+    }
+    #[test]
+    fn risk_curve_monotonic() {
+        let mut last = 0u16;
+        for score in [0u8, 21, 41, 61, 90] {
+            let m = risk_multiplier_bps(score);
+            assert!(m >= last);
+            last = m;
+        }
+    }
+}
