@@ -66,3 +66,66 @@ impl Bridge {
         core::str::from_utf8(&self.symbol[..end]).unwrap_or("")
     }
 }
+
+#[account]
+#[derive(Default, Debug)]
+pub struct Policy {
+    pub beneficiary: Pubkey,
+    pub bridge: Pubkey,
+    pub convoy: Pubkey,
+    pub cargo: u64,
+    pub toll_paid: u64,
+    pub risk_at_open: u8,
+    pub class: u8,
+    pub opened_slot: u64,
+    pub mature_slot: u64,
+    pub expires_slot: u64,
+    pub state: u8,
+    pub bump: u8,
+    pub reserved: [u8; 16],
+}
+
+impl Policy {
+    pub const LEN: usize = DISCRIMINATOR_LEN
+        + 32 + 32 + 32 + 8 + 8 + 1 + 1 + 8 + 8 + 8 + 1 + 1 + 16;
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PolicyState {
+    Pending = 0,
+    Active = 1,
+    Settled = 2,
+    Claimed = 3,
+    Expired = 4,
+}
+
+impl Default for PolicyState {
+    fn default() -> Self { Self::Pending }
+}
+
+impl PolicyState {
+    pub fn from_u8(v: u8) -> Self {
+        match v {
+            0 => Self::Pending,
+            1 => Self::Active,
+            2 => Self::Settled,
+            3 => Self::Claimed,
+            4 => Self::Expired,
+            _ => Self::Pending,
+        }
+    }
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VesselClass {
+    Coaster = 0,
+    Tanker = 1,
+    Capesize = 2,
+    DarkFleet = 3,
+}
+
+impl Default for VesselClass {
+    fn default() -> Self { Self::Coaster }
+}
