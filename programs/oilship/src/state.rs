@@ -129,3 +129,70 @@ pub enum VesselClass {
 impl Default for VesselClass {
     fn default() -> Self { Self::Coaster }
 }
+
+impl VesselClass {
+    pub fn from_cargo(cargo: u64) -> Self {
+        const ONE_SOL: u64 = LAMPORTS_PER_SOL;
+        if cargo < ONE_SOL { Self::Coaster }
+        else if cargo < 50 * ONE_SOL { Self::Tanker }
+        else if cargo < 250 * ONE_SOL { Self::Capesize }
+        else { Self::DarkFleet }
+    }
+}
+
+#[account]
+#[derive(Default, Debug)]
+pub struct WreckFund {
+    pub authority: Pubkey,
+    pub balance: u64,
+    pub open_coverage: u64,
+    pub lifetime_deposits: u64,
+    pub lifetime_payouts: u64,
+    pub payout_count: u64,
+    pub bump: u8,
+    pub reserved: [u8; 32],
+}
+
+impl WreckFund {
+    pub const LEN: usize = DISCRIMINATOR_LEN + 32 + 8 + 8 + 8 + 8 + 8 + 1 + 32;
+}
+
+#[account]
+#[derive(Default, Debug)]
+pub struct Treasury {
+    pub authority: Pubkey,
+    pub balance: u64,
+    pub lifetime_in: u64,
+    pub lifetime_out: u64,
+    pub bump: u8,
+    pub reserved: [u8; 32],
+}
+
+impl Treasury {
+    pub const LEN: usize = DISCRIMINATOR_LEN + 32 + 8 + 8 + 8 + 1 + 32;
+}
+
+#[account]
+#[derive(Default, Debug)]
+pub struct Convoy {
+    pub bridge: Pubkey,
+    pub opened_slot: u64,
+    pub closed_slot: u64,
+    pub policy_count: u32,
+    pub total_cargo: u64,
+    pub total_toll: u64,
+    pub bump: u8,
+    pub reserved: [u8; 16],
+}
+
+impl Convoy {
+    pub const LEN: usize = DISCRIMINATOR_LEN + 32 + 8 + 8 + 4 + 8 + 8 + 1 + 16;
+}
+
+pub fn copy_into<const N: usize>(src: &str) -> [u8; N] {
+    let mut dst = [0u8; N];
+    let bytes = src.as_bytes();
+    let len = core::cmp::min(bytes.len(), N);
+    dst[..len].copy_from_slice(&bytes[..len]);
+    dst
+}
