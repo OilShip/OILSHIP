@@ -113,3 +113,60 @@ fn safe_add_overflow() {
 fn safe_sub_underflow() {
     assert!(safe_sub(1, 2).is_err());
 }
+
+#[test]
+fn safe_div_zero() {
+    assert!(safe_div(10, 0).is_err());
+}
+
+#[test]
+fn copy_into_truncates() {
+    let s = "this string is intentionally too long for the destination";
+    let dst = copy_into::<8>(s);
+    assert_eq!(dst.len(), 8);
+}
+
+#[test]
+fn account_size_constants() {
+    assert!(GlobalConfig::LEN >= 200);
+    assert!(Bridge::LEN >= 100);
+    assert!(Policy::LEN >= 100);
+    assert!(WreckFund::LEN >= 100);
+    assert!(Treasury::LEN >= 60);
+    assert!(Convoy::LEN >= 80);
+}
+
+#[test]
+fn compute_toll_low_risk() {
+    let cargo = 1_000 * LAMPORTS_PER_SOL;
+    let base = compute_toll(cargo, DEFAULT_TOLL_BPS).unwrap();
+    let adjusted = apply_risk_multiplier(base, 5).unwrap();
+    assert!(adjusted < base);
+}
+
+#[test]
+fn compute_toll_high_risk() {
+    let cargo = 1_000 * LAMPORTS_PER_SOL;
+    let base = compute_toll(cargo, DEFAULT_TOLL_BPS).unwrap();
+    let adjusted = apply_risk_multiplier(base, 90).unwrap();
+    assert!(adjusted > base);
+}
+
+#[test]
+fn min_max_policy_constants_consistent() {
+    assert!(MIN_POLICY_CARGO_LAMPORTS < MAX_POLICY_CARGO_LAMPORTS);
+    assert!(MIN_POLICY_SLOTS < MAX_POLICY_SLOTS);
+}
+
+#[test]
+fn risk_tier_thresholds() {
+    assert!(RISK_TIER_1_MAX < RISK_TIER_2_MAX);
+    assert!(RISK_TIER_2_MAX < RISK_TIER_3_MAX);
+    assert!(RISK_TIER_3_MAX < RISK_QUARANTINE_MIN);
+}
+
+#[test]
+fn split_defaults_sum_to_denom() {
+    let total = DEFAULT_FUND_SPLIT_BPS as u32 + DEFAULT_BUYBACK_SPLIT_BPS as u32 + DEFAULT_OPS_SPLIT_BPS as u32;
+    assert_eq!(total, BPS_DENOM as u32);
+}
