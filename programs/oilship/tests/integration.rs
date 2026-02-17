@@ -62,3 +62,54 @@ fn risk_curve_buckets() {
     assert_eq!(risk_multiplier_bps(81), 19_000);
     assert_eq!(risk_multiplier_bps(100), 19_000);
 }
+
+#[test]
+fn reserve_ratio_no_open() {
+    assert_eq!(reserve_ratio_bps(1_000, 0), BPS_DENOM as u16);
+}
+
+#[test]
+fn reserve_ratio_full_cover() {
+    assert_eq!(reserve_ratio_bps(1_000, 1_000), BPS_DENOM as u16);
+}
+
+#[test]
+fn reserve_ratio_half() {
+    let r = reserve_ratio_bps(500, 1_000);
+    assert_eq!(r, 5_000);
+}
+
+#[test]
+fn slots_to_days_round() {
+    assert_eq!(slots_to_days(216_000), 1);
+    assert_eq!(slots_to_days(216_000 * 2), 2);
+    assert_eq!(slots_to_days(108_000), 0);
+}
+
+#[test]
+fn days_to_slots_round() {
+    assert_eq!(days_to_slots(0), 0);
+    assert_eq!(days_to_slots(1), 216_000);
+    assert_eq!(days_to_slots(2), 432_000);
+}
+
+#[test]
+fn check_capacity_ok() {
+    assert!(check_capacity(1_000, 500).is_ok());
+    assert!(check_capacity(1_000, 1_000).is_ok());
+}
+
+#[test]
+fn check_capacity_err() {
+    assert!(check_capacity(500, 1_000).is_err());
+}
+
+#[test]
+fn safe_add_overflow() {
+    assert!(safe_add(u64::MAX, 1).is_err());
+}
+
+#[test]
+fn safe_sub_underflow() {
+    assert!(safe_sub(1, 2).is_err());
+}
