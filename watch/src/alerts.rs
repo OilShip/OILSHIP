@@ -68,3 +68,36 @@ impl WebhookSink {
         Self { url: url.into(), http: reqwest::Client::new() }
     }
 }
+
+impl AlertSink for WebhookSink {
+    fn name(&self) -> &'static str { "webhook" }
+
+    fn handle(&self, alert: &Alert) -> Result<()> {
+        let url = self.url.clone();
+        let body = serde_json::to_string(alert)?;
+        let http = self.http.clone();
+        tokio::spawn(async move {
+            match http.post(&url).body(body).send().await {
+                Ok(resp) if resp.status().is_success() => {}
+                Ok(resp) => tracing::warn!("webhook non-success: {}", resp.status()),
+                Err(e) => tracing::warn!("webhook error: {}", e),
+            }
+        });
+        Ok(())
+    }
+}
+
+pub struct SinkSet(pub Vec<Arc<dyn AlertSink>>);
+
+impl SinkSet {
+    pub fn empty() -> Self { Self(vec![]) }
+    pub fn add(&mut self, sink: Arc<dyn AlertSink>) { self.0.push(sink); }
+
+    pub fn dispatch(&self, alert: &Alert) {
+        for sink in &self.0 {
+            if let Err(e) = sink.handle(alert) {
+                tracing::warn!("sink {} failed: {}", sink.name(), e);
+            }
+        }
+    }
+}
