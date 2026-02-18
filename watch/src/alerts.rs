@@ -39,3 +39,32 @@ impl Alert {
         Some(Self { kind, assessment, anomalies: vec![] })
     }
 }
+
+pub struct LogSink;
+
+impl AlertSink for LogSink {
+    fn name(&self) -> &'static str { "log" }
+
+    fn handle(&self, alert: &Alert) -> Result<()> {
+        tracing::info!(
+            target: "oilship.alert",
+            bridge = %alert.assessment.bridge,
+            score = alert.assessment.score,
+            tier = ?alert.assessment.tier,
+            kind = ?alert.kind,
+            "alert"
+        );
+        Ok(())
+    }
+}
+
+pub struct WebhookSink {
+    pub url: String,
+    pub http: reqwest::Client,
+}
+
+impl WebhookSink {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self { url: url.into(), http: reqwest::Client::new() }
+    }
+}
