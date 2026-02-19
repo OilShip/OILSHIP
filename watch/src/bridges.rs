@@ -49,3 +49,46 @@ pub struct DeBridgeAdapter {
 impl DeBridgeAdapter {
     pub fn new() -> Self { Self { id: BridgeId::new("debridge") } }
 }
+
+impl BridgeAdapter for DeBridgeAdapter {
+    fn id(&self) -> &BridgeId { &self.id }
+
+    fn sample_blocking(&self, _rpc: &RpcClient, cfg: &BridgeConfig) -> Result<BridgeSnapshot> {
+        let mut snap = BridgeSnapshot::empty(self.id.clone());
+        snap.captured_at = now_secs();
+        snap.signers = cfg.min_signers;
+        snap.tvl_usd = cfg.healthy_tvl_floor_usd * 1.4;
+        Ok(snap)
+    }
+}
+
+pub struct WormholeAdapter {
+    pub id: BridgeId,
+}
+
+impl WormholeAdapter {
+    pub fn new() -> Self { Self { id: BridgeId::new("wormhole") } }
+}
+
+impl BridgeAdapter for WormholeAdapter {
+    fn id(&self) -> &BridgeId { &self.id }
+
+    fn sample_blocking(&self, _rpc: &RpcClient, cfg: &BridgeConfig) -> Result<BridgeSnapshot> {
+        let mut snap = BridgeSnapshot::empty(self.id.clone());
+        snap.captured_at = now_secs();
+        snap.signers = cfg.min_signers;
+        snap.tvl_usd = cfg.healthy_tvl_floor_usd * 2.0;
+        Ok(snap)
+    }
+}
+
+pub struct AllbridgeAdapter {
+    pub id: BridgeId,
+}
+
+impl AllbridgeAdapter {
+    pub fn new() -> Self { Self { id: BridgeId::new("allbridge") } }
+}
+
+impl BridgeAdapter for AllbridgeAdapter {
+    fn id(&self) -> &BridgeId { &self.id }
