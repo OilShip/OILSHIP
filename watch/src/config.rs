@@ -48,3 +48,53 @@ impl EngineConfig {
         debridge.solana_program = Some("DEbrdGj3HsRsAzx6uH4MKyREKxVAfBydijLUF3ygsFfh".to_string());
         debridge.healthy_tvl_floor_usd = 4_000_000.0;
         bridges.push(debridge);
+
+        let mut wormhole = BridgeConfig::placeholder("wormhole", "Wormhole Portal");
+        wormhole.solana_program = Some("worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth".to_string());
+        wormhole.healthy_tvl_floor_usd = 20_000_000.0;
+        wormhole.min_signers = 13;
+        bridges.push(wormhole);
+
+        let mut allbridge = BridgeConfig::placeholder("allbridge", "Allbridge Core");
+        allbridge.healthy_tvl_floor_usd = 2_000_000.0;
+        bridges.push(allbridge);
+
+        Self {
+            solana_rpc: "https://api.mainnet-beta.solana.com".to_string(),
+            eth_rpc: "https://eth.llamarpc.com".to_string(),
+            arb_rpc: "https://arb1.arbitrum.io/rpc".to_string(),
+            op_rpc: "https://mainnet.optimism.io".to_string(),
+            base_rpc: "https://mainnet.base.org".to_string(),
+            poll_interval_secs: 30,
+            jitter_secs: 5,
+            publish_to_chain: false,
+            program_id: "11111111111111111111111111111111".to_string(),
+            operator_keypair: "~/.config/solana/id.json".to_string(),
+            alert_webhook: None,
+            log_level: "info".to_string(),
+            bridges,
+        }
+    }
+
+    pub fn load_from(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let raw = std::fs::read_to_string(path).with_context(|| format!("reading config at {}", path.display()))?;
+        let parsed: Self = serde_json::from_str(&raw).with_context(|| format!("parsing config at {}", path.display()))?;
+        parsed.validate()?;
+        Ok(parsed)
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        if self.poll_interval_secs == 0 {
+            anyhow::bail!("poll_interval_secs must be > 0");
+        }
+        if self.bridges.is_empty() {
+            anyhow::bail!("at least one bridge must be configured");
+        }
+        for b in &self.bridges {
+            if b.id.as_str().is_empty() {
+                anyhow::bail!("bridge id cannot be empty");
+            }
+        }
+        Ok(())
+    }
