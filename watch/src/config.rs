@@ -98,3 +98,43 @@ impl EngineConfig {
         }
         Ok(())
     }
+
+    pub fn lookup(&self, id: &BridgeId) -> Option<&BridgeConfig> {
+        self.bridges.iter().find(|b| b.id == *id)
+    }
+
+    pub fn save_to(&self, path: impl AsRef<Path>) -> Result<()> {
+        let s = serde_json::to_string_pretty(self)?;
+        std::fs::write(path, s)?;
+        Ok(())
+    }
+
+    pub fn rpc_table(&self) -> BTreeMap<Chain, &str> {
+        let mut t = BTreeMap::new();
+        t.insert(Chain::Solana, self.solana_rpc.as_str());
+        t.insert(Chain::Ethereum, self.eth_rpc.as_str());
+        t.insert(Chain::Arbitrum, self.arb_rpc.as_str());
+        t.insert(Chain::Optimism, self.op_rpc.as_str());
+        t.insert(Chain::Base, self.base_rpc.as_str());
+        t
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn defaults_validate() {
+        let cfg = EngineConfig::defaults();
+        assert!(cfg.validate().is_ok());
+        assert!(!cfg.bridges.is_empty());
+    }
+
+    #[test]
+    fn rpc_lookup() {
+        let cfg = EngineConfig::defaults();
+        assert!(cfg.rpc_for(Chain::Solana).contains("solana"));
+        assert!(cfg.rpc_for(Chain::Ethereum).contains("eth"));
+    }
+}
