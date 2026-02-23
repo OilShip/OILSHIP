@@ -26,3 +26,24 @@ use clap::{Parser, Subcommand};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{info, warn};
+
+#[derive(Parser)]
+#[command(name = "oilship-watch", version, about = "OILSHIP bridge monitor")]
+struct Cli {
+    #[command(subcommand)]
+    cmd: Cmd,
+}
+
+#[derive(Subcommand)]
+enum Cmd {
+    Run {
+        #[arg(short, long, default_value = "watch.json")]
+        config: String,
+    },
+    Sample {
+        bridge: String,
+        #[arg(short, long, default_value = "watch.json")]
+        config: String,
+    },
+    PrintConfig,
+}
