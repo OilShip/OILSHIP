@@ -93,3 +93,49 @@ impl RpcClient {
         let s = v.as_str().unwrap_or("0x0");
         Ok(u128::from_str_radix(s.trim_start_matches("0x"), 16).unwrap_or(0))
     }
+
+    pub async fn eth_get_logs(&self, chain: Chain, from_block: u64, to_block: u64, address: &str) -> Result<Vec<Value>> {
+        let v = self.call(chain, "eth_getLogs", json!([{
+            "fromBlock": format!("0x{:x}", from_block),
+            "toBlock": format!("0x{:x}", to_block),
+            "address": address,
+        }])).await?;
+        Ok(v.as_array().cloned().unwrap_or_default())
+    }
+
+    pub async fn eth_call(&self, chain: Chain, to: &str, data: &str) -> Result<String> {
+        let v = self.call(chain, "eth_call", json!([{ "to": to, "data": data }, "latest"])).await?;
+        Ok(v.as_str().unwrap_or("0x").to_string())
+    }
+}
+
+pub fn wei_to_usd(wei: u128, price_usd: f64) -> f64 {
+    let eth = wei as f64 / 1e18;
+    eth * price_usd
+}
+
+pub fn lamports_to_sol(lamports: u64) -> f64 {
+    lamports as f64 / 1e9
+}
+
+pub fn delta_pct(now: f64, then: f64) -> f64 {
+    if then <= 0.0 { return 0.0; }
+    ((now - then) / then) * 100.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn delta_basic() {
+        assert_eq!(delta_pct(110.0, 100.0), 10.0);
+        assert_eq!(delta_pct(90.0, 100.0), -10.0);
+        assert_eq!(delta_pct(100.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn lamports_round_trip() {
+        assert_eq!(lamports_to_sol(1_000_000_000), 1.0);
+    }
+}
