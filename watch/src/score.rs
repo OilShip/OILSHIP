@@ -59,3 +59,28 @@ pub fn label(score: u8) -> &'static str {
 mod tests {
     use super::*;
     use crate::types::{AnomalyKind, Severity};
+
+    fn anomaly(kind: AnomalyKind, sev: Severity) -> Anomaly {
+        Anomaly { kind, severity: sev, message: "test".into(), captured_at: 0, source: "test".into() }
+    }
+
+    #[test]
+    fn baseline_only() {
+        let r = compute(BridgeId::new("x"), &[]);
+        assert_eq!(r.score, BASELINE_SCORE as u8);
+    }
+
+    #[test]
+    fn critical_event() {
+        let a = anomaly(AnomalyKind::AdminKeyRotation, Severity::Critical);
+        let r = compute(BridgeId::new("x"), &[a; 5]);
+        assert!(r.score >= 50);
+    }
+
+    #[test]
+    fn ewma_smoothes() {
+        let series = [10, 20, 30, 40];
+        let s = ewma_smooth(&series, 0.4);
+        assert!(s > 10 && s < 40);
+    }
+}
