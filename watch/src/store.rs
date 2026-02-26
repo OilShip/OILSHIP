@@ -34,3 +34,33 @@ pub struct Store {
 
 impl Store {
     pub fn shared() -> Arc<Self> { Arc::new(Self::default()) }
+
+    pub fn record_sample(&self, snap: BridgeSnapshot, assessment: RiskAssessment) {
+        let mut g = self.inner.write();
+        let entry = g.entry(snap.bridge.clone()).or_default();
+        entry.last_snapshot = Some(snap);
+        entry.push_score(assessment.score);
+        entry.last_assessment = Some(assessment);
+        entry.samples_taken += 1;
+    }
+
+    pub fn snapshot_for(&self, id: &BridgeId) -> Option<BridgeSnapshot> {
+        self.inner.read().get(id).and_then(|e| e.last_snapshot.clone())
+    }
+
+    pub fn assessment_for(&self, id: &BridgeId) -> Option<RiskAssessment> {
+        self.inner.read().get(id).and_then(|e| e.last_assessment.clone())
+    }
+
+    pub fn last_tier(&self, id: &BridgeId) -> Option<Tier> {
+        self.inner.read().get(id).and_then(|e| e.last_tier())
+    }
+
+    pub fn all_bridges(&self) -> Vec<BridgeId> {
+        self.inner.read().keys().cloned().collect()
+    }
+
+    pub fn samples_total(&self) -> u64 {
+        self.inner.read().values().map(|e| e.samples_taken).sum()
+    }
+}
