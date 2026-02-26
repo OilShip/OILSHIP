@@ -93,3 +93,51 @@ impl Signal for SignerSignal {
 pub struct OracleDriftSignal {
     pub max_drift_bps: u32,
 }
+
+impl Signal for OracleDriftSignal {
+    fn name(&self) -> &'static str { "oracle-drift" }
+
+    fn evaluate(&self, snap: &BridgeSnapshot, _cfg: &BridgeConfig) -> Vec<Anomaly> {
+        let mut out = vec![];
+        if snap.oracle_drift_bps > self.max_drift_bps {
+            let bps = snap.oracle_drift_bps;
+            let sev = if bps > 500 { Severity::Critical }
+                else if bps > 200 { Severity::High }
+                else { Severity::Medium };
+            out.push(Anomaly {
+                kind: AnomalyKind::OracleDrift,
+                severity: sev,
+                message: format!("oracle drift {} bps", bps),
+                captured_at: snap.captured_at,
+                source: "oracle-drift".to_string(),
+            });
+        }
+        out
+    }
+}
+
+pub struct SignalSet {
+    pub signals: Vec<Box<dyn Signal>>,
+}
+
+impl SignalSet {
+    pub fn standard() -> Self {
+        Self {
+            signals: vec![
+                Box::new(TvlDropSignal { min_drop_pct: 10.0 }),
+                Box::new(AdminKeySignal { max_moves_24h: 1 }),
+                Box::new(SignerSignal),
+                Box::new(OracleDriftSignal { max_drift_bps: 100 }),
+            ],
+        }
+    }
+
+    pub fn evaluate_all(&self, snap: &BridgeSnapshot, cfg: &BridgeConfig) -> Vec<Anomaly> {
+        let mut out = vec![];
+        for s in &self.signals {
+            out.extend(s.evaluate(snap, cfg));
+        }
+        out.extend(snap.anomalies.iter().cloned());
+        out
+    }
+}
