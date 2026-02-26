@@ -48,3 +48,48 @@ impl Signal for TvlDropSignal {
 pub struct AdminKeySignal {
     pub max_moves_24h: u32,
 }
+
+impl Signal for AdminKeySignal {
+    fn name(&self) -> &'static str { "admin-key" }
+
+    fn evaluate(&self, snap: &BridgeSnapshot, _cfg: &BridgeConfig) -> Vec<Anomaly> {
+        let mut out = vec![];
+        if snap.admin_key_recent_moves > self.max_moves_24h {
+            let sev = if snap.admin_key_recent_moves > 5 { Severity::Critical } else { Severity::High };
+            out.push(Anomaly {
+                kind: AnomalyKind::AdminKeyRotation,
+                severity: sev,
+                message: format!("admin key moved {} times in 24h", snap.admin_key_recent_moves),
+                captured_at: snap.captured_at,
+                source: "admin-key".to_string(),
+            });
+        }
+        out
+    }
+}
+
+pub struct SignerSignal;
+
+impl Signal for SignerSignal {
+    fn name(&self) -> &'static str { "signer" }
+
+    fn evaluate(&self, snap: &BridgeSnapshot, cfg: &BridgeConfig) -> Vec<Anomaly> {
+        let mut out = vec![];
+        if snap.signers > 0 && snap.signers < cfg.min_signers {
+            let missing = cfg.min_signers - snap.signers;
+            let sev = if missing >= 3 { Severity::High } else { Severity::Medium };
+            out.push(Anomaly {
+                kind: AnomalyKind::SignerCollusion,
+                severity: sev,
+                message: format!("{} signers active, expected {}", snap.signers, cfg.min_signers),
+                captured_at: snap.captured_at,
+                source: "signer".to_string(),
+            });
+        }
+        out
+    }
+}
+
+pub struct OracleDriftSignal {
+    pub max_drift_bps: u32,
+}
