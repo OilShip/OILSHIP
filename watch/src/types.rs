@@ -182,3 +182,66 @@ pub enum Tier {
     Tier3,
     Quarantined,
 }
+
+impl Tier {
+    pub fn from_score(score: u8) -> Self {
+        match score {
+            0..=30 => Tier::Tier1,
+            31..=55 => Tier::Tier2,
+            56..=80 => Tier::Tier3,
+            _ => Tier::Quarantined,
+        }
+    }
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Tier::Tier1 => "TIER 1",
+            Tier::Tier2 => "TIER 2",
+            Tier::Tier3 => "TIER 3",
+            Tier::Quarantined => "QUARANTINED",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BridgeConfig {
+    pub id: BridgeId,
+    pub display_name: String,
+    pub solana_program: Option<String>,
+    pub evm_contracts: BTreeMap<Chain, String>,
+    pub guardian_endpoint: Option<String>,
+    pub min_signers: u32,
+    pub healthy_tvl_floor_usd: f64,
+}
+
+impl BridgeConfig {
+    pub fn placeholder(id: &str, display_name: &str) -> Self {
+        Self {
+            id: BridgeId::new(id),
+            display_name: display_name.to_string(),
+            solana_program: None,
+            evm_contracts: BTreeMap::new(),
+            guardian_endpoint: None,
+            min_signers: 5,
+            healthy_tvl_floor_usd: 1_000_000.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Command {
+    SampleAll,
+    SampleOne(BridgeId),
+    Quarantine(BridgeId),
+    LiftQuarantine(BridgeId),
+    Shutdown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EngineStatus {
+    pub uptime_secs: u64,
+    pub bridges_watched: u32,
+    pub anomalies_seen: u64,
+    pub samples_taken: u64,
+    pub last_sample_at: i64,
+}
