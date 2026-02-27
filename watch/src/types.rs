@@ -118,3 +118,67 @@ pub enum AnomalyKind {
     PoolImbalance,
     SuspiciousMemo,
 }
+
+impl AnomalyKind {
+    pub fn weight(&self) -> u32 {
+        match self {
+            Self::TvlDrop => 25,
+            Self::AdminKeyRotation => 30,
+            Self::SignerCollusion => 35,
+            Self::OracleDrift => 12,
+            Self::UnusualWithdrawal => 18,
+            Self::PauseFlagSet => 8,
+            Self::ContractUpgrade => 22,
+            Self::GuardianOffline => 14,
+            Self::PoolImbalance => 10,
+            Self::SuspiciousMemo => 6,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Severity {
+    Info,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+impl Severity {
+    pub fn factor(&self) -> f64 {
+        match self {
+            Self::Info => 0.25,
+            Self::Low => 0.5,
+            Self::Medium => 1.0,
+            Self::High => 1.6,
+            Self::Critical => 2.4,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RiskAssessment {
+    pub bridge: BridgeId,
+    pub score: u8,
+    pub tier: Tier,
+    pub computed_at: i64,
+    pub factors: Vec<RiskFactor>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RiskFactor {
+    pub name: String,
+    pub contribution: u32,
+    pub note: String,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Tier {
+    Tier1,
+    Tier2,
+    Tier3,
+    Quarantined,
+}
