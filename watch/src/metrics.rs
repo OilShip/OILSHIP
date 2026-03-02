@@ -36,3 +36,40 @@ impl Counters {
         out
     }
 }
+
+pub struct UptimeClock {
+    started: Instant,
+}
+
+impl UptimeClock {
+    pub fn new() -> Self { Self { started: Instant::now() } }
+    pub fn uptime_secs(&self) -> u64 { self.started.elapsed().as_secs() }
+}
+
+impl Default for UptimeClock {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn counters_basic() {
+        let c = Counters::default();
+        c.incr("samples");
+        c.incr("samples");
+        c.add("anomalies", 5);
+        let snap = c.snapshot();
+        assert_eq!(snap["samples"], 2);
+        assert_eq!(snap["anomalies"], 5);
+    }
+
+    #[test]
+    fn render_includes_lines() {
+        let c = Counters::default();
+        c.add("foo", 3);
+        let s = c.render_prom();
+        assert!(s.contains("foo 3"));
+    }
+}
