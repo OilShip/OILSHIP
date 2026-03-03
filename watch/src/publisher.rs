@@ -75,3 +75,44 @@ pub enum PublishOutcome {
     Throttled,
     Sent { tx_signature: String, slot: u64 },
 }
+
+pub fn assessments_into_batch(assessments: Vec<RiskAssessment>) -> Vec<RiskAssessment> {
+    let mut sorted = assessments;
+    sorted.sort_by_key(|a| std::cmp::Reverse(a.score));
+    sorted
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Tier;
+
+    fn assess(bridge: &str, score: u8) -> RiskAssessment {
+        RiskAssessment {
+            bridge: BridgeId::new(bridge),
+            score,
+            tier: Tier::from_score(score),
+            computed_at: 0,
+            factors: vec![],
+        }
+    }
+
+    #[tokio::test]
+    async fn dry_run_publish() {
+        let p = Publisher::new(PublishOptions::default());
+        let out = p.publish(&assess("a", 12)).await.unwrap();
+        assert!(matches!(out, PublishOutcome::DryRun));
+    }
+
+    #[test]
+    fn batch_orders_by_score_desc() {
+        let batch = assessments_into_batch(vec![
+            assess("a", 10),
+            assess("b", 90),
+            assess("c", 50),
+        ]);
+        assert_eq!(batch[0].score, 90);
+        assert_eq!(batch[1].score, 50);
+        assert_eq!(batch[2].score, 10);
+    }
+}
