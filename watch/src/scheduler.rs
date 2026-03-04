@@ -29,3 +29,34 @@ impl Scheduler {
     pub fn new(base: Schedule) -> Self {
         Self { base, last_run: BTreeMap::new(), rng_state: 0xc01dbeef }
     }
+
+    pub fn due(&self, id: &BridgeId, now: Instant) -> bool {
+        match self.last_run.get(id) {
+            None => true,
+            Some(t) => now.duration_since(*t) >= self.base.interval,
+        }
+    }
+
+    pub fn mark(&mut self, id: BridgeId, now: Instant) {
+        self.last_run.insert(id, now);
+    }
+
+    pub fn jitter(&mut self) -> Duration {
+        if self.base.jitter.is_zero() { return Duration::ZERO; }
+        self.rng_state = self.rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let max = self.base.jitter.as_millis() as u64;
+        let pick = (self.rng_state >> 32) as u64 % max.max(1);
+        Duration::from_millis(pick)
+    }
+
+    pub fn next_after(&mut self, now: Instant) -> Duration {
+        let cycle = self.base.interval + self.jitter();
+        let oldest = self.last_run.values().min().cloned().unwrap_or(now);
+        let elapsed = now.duration_since(oldest);
+        if elapsed >= cycle { Duration::ZERO } else { cycle - elapsed }
+    }
+
+    pub fn known_bridges(&self) -> Vec<&BridgeId> {
+        self.last_run.keys().collect()
+    }
+}
