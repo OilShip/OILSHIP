@@ -71,3 +71,32 @@ pub fn synthesize_timeline(
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{AnomalyKind, BridgeConfig, Severity};
+
+    #[test]
+    fn empty_replay_yields_empty_output() {
+        let cfg = BridgeConfig::placeholder("x", "X");
+        let out = replay(ReplayInput { bridge_cfg: cfg, timeline: vec![] }, &SignalSet::standard());
+        assert_eq!(out.assessments.len(), 0);
+        assert_eq!(out.max_score, 0);
+    }
+
+    #[test]
+    fn calm_seas_stays_low() {
+        let cfg = BridgeConfig::placeholder("calm", "Calm");
+        let timeline = synthesize_timeline(
+            BridgeId::new("calm"),
+            &[
+                (AnomalyKind::OracleDrift, Severity::Low, "drift 20 bps"),
+                (AnomalyKind::PoolImbalance, Severity::Low, "stable drift 1%"),
+            ],
+        );
+        let out = replay(ReplayInput { bridge_cfg: cfg, timeline }, &SignalSet::standard());
+        assert!(out.max_score < 60);
+        assert!(out.quarantined_at.is_none());
+    }
+}
