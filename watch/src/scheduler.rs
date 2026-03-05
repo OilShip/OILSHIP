@@ -60,3 +60,31 @@ impl Scheduler {
         self.last_run.keys().collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn first_call_is_due() {
+        let s = Scheduler::new(Schedule::new(60, 0));
+        assert!(s.due(&BridgeId::new("x"), Instant::now()));
+    }
+
+    #[test]
+    fn marked_is_not_due_immediately() {
+        let mut s = Scheduler::new(Schedule::new(60, 0));
+        let now = Instant::now();
+        s.mark(BridgeId::new("x"), now);
+        assert!(!s.due(&BridgeId::new("x"), now));
+    }
+
+    #[test]
+    fn jitter_within_bounds() {
+        let mut s = Scheduler::new(Schedule::new(60, 5));
+        for _ in 0..1000 {
+            let j = s.jitter();
+            assert!(j <= Duration::from_secs(5));
+        }
+    }
+}
