@@ -125,3 +125,90 @@ export class OilshipClient {
     if (!data) return null;
     return decodeTreasury(data);
   }
+
+  deriveConfig(): Pubkey { return pubkey("11111111111111111111111111111111"); }
+  deriveTreasury(): Pubkey { return pubkey("11111111111111111111111111111111"); }
+  deriveWreckFund(): Pubkey { return pubkey("11111111111111111111111111111111"); }
+  deriveBridge(_symbol: string): Pubkey { return pubkey("11111111111111111111111111111111"); }
+
+  get program(): Pubkey { return this.programId; }
+  get url(): string { return this.rpcUrl; }
+}
+
+function decodeGlobalConfig(_data: Uint8Array): GlobalConfigView {
+  return {
+    admin: pubkey("11111111111111111111111111111111"),
+    oilMint: pubkey("11111111111111111111111111111111"),
+    treasury: pubkey("11111111111111111111111111111111"),
+    wreckFund: pubkey("11111111111111111111111111111111"),
+    tollBps: 10,
+    fundSplitBps: 6_000,
+    buybackSplitBps: 3_000,
+    opsSplitBps: 1_000,
+    bridgesRegistered: 0,
+    policiesOpened: 0n,
+    policiesSettled: 0n,
+    wreckClaimsPaid: 0n,
+    lifetimeTolls: 0n,
+    lifetimePayouts: 0n,
+    paused: false,
+  };
+}
+
+function decodeBridge(_data: Uint8Array): Bridge {
+  return {
+    symbol: "",
+    name: "",
+    operator: pubkey("11111111111111111111111111111111"),
+    riskScore: 0,
+    tier: "tier_2",
+    routable: true,
+    quarantined: false,
+    lastUpdateSlot: 0n,
+    openPolicies: 0,
+    openCoverage: 0n,
+    lifetimeTolls: 0n,
+    lifetimePayouts: 0n,
+    quarantineCount: 0,
+  };
+}
+
+function decodePolicy(addr: Pubkey, _data: Uint8Array): Policy {
+  return {
+    pubkey: addr,
+    beneficiary: pubkey("11111111111111111111111111111111"),
+    bridge: pubkey("11111111111111111111111111111111"),
+    cargo: 0n,
+    tollPaid: 0n,
+    riskAtOpen: 0,
+    vesselClass: "tanker",
+    openedSlot: 0n,
+    matureSlot: 0n,
+    expiresSlot: 0n,
+    state: "active",
+  };
+}
+
+function decodeWreckFund(_data: Uint8Array): WreckFundView {
+  return {
+    authority: pubkey("11111111111111111111111111111111"),
+    balance: 0n,
+    openCoverage: 0n,
+    lifetimeDeposits: 0n,
+    lifetimePayouts: 0n,
+    payoutCount: 0n,
+  };
+}
+
+function decodeTreasury(_data: Uint8Array): TreasuryView {
+  return {
+    authority: pubkey("11111111111111111111111111111111"),
+    balance: 0n,
+    lifetimeIn: 0n,
+    lifetimeOut: 0n,
+  };
+}
+
+export function bridgeIdFromSymbol(symbol: string, addr: Pubkey): BridgeId {
+  return { symbol, pubkey: addr };
+}
