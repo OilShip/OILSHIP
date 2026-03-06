@@ -73,3 +73,55 @@ export class OilshipClient {
     const v = await this.rpc<number>("getSlot", [{ commitment: this.commitment }]);
     return BigInt(v);
   }
+
+  async getBalance(addr: Pubkey): Promise<Lamports> {
+    const v = await this.rpc<{ value: number }>("getBalance", [
+      addr,
+      { commitment: this.commitment },
+    ]);
+    return BigInt(v.value);
+  }
+
+  async getAccountInfo(addr: Pubkey): Promise<Uint8Array | null> {
+    const v = await this.rpc<{ value: AccountInfo | null }>("getAccountInfo", [
+      addr,
+      { encoding: "base64", commitment: this.commitment },
+    ]);
+    if (!v.value) return null;
+    const [b64] = v.value.data;
+    return Uint8Array.from(globalThis.atob(b64), (c) => c.charCodeAt(0));
+  }
+
+  async fetchGlobalConfig(): Promise<GlobalConfigView | null> {
+    const addr = this.deriveConfig();
+    const data = await this.getAccountInfo(addr);
+    if (!data) return null;
+    return decodeGlobalConfig(data);
+  }
+
+  async fetchBridge(symbol: string): Promise<Bridge | null> {
+    const addr = this.deriveBridge(symbol);
+    const data = await this.getAccountInfo(addr);
+    if (!data) return null;
+    return decodeBridge(data);
+  }
+
+  async fetchPolicy(addr: Pubkey): Promise<Policy | null> {
+    const data = await this.getAccountInfo(addr);
+    if (!data) return null;
+    return decodePolicy(addr, data);
+  }
+
+  async fetchWreckFund(): Promise<WreckFundView | null> {
+    const addr = this.deriveWreckFund();
+    const data = await this.getAccountInfo(addr);
+    if (!data) return null;
+    return decodeWreckFund(data);
+  }
+
+  async fetchTreasury(): Promise<TreasuryView | null> {
+    const addr = this.deriveTreasury();
+    const data = await this.getAccountInfo(addr);
+    if (!data) return null;
+    return decodeTreasury(data);
+  }
