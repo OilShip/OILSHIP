@@ -54,3 +54,57 @@ class Reader {
     const hi = BigInt(this.u32());
     return (hi << 32n) | lo;
   }
+
+  bool(): boolean {
+    return this.u8() !== 0;
+  }
+
+  bytes(n: number): Uint8Array {
+    this.checkRoom(n);
+    const slice = this.buf.slice(this.offset, this.offset + n);
+    this.offset += n;
+    return slice;
+  }
+
+  pubkey(): Pubkey {
+    return pubkey(base58Encode(this.bytes(32)));
+  }
+
+  fixedString(n: number): string {
+    const bytes = this.bytes(n);
+    let end = bytes.indexOf(0);
+    if (end === -1) end = n;
+    return new TextDecoder("utf-8").decode(bytes.subarray(0, end));
+  }
+
+  private checkRoom(n: number): void {
+    if (this.offset + n > this.buf.length) {
+      throw new Error(`reader overrun at offset ${this.offset} need ${n}`);
+    }
+  }
+}
+
+const MAX_NAME_LEN = 48;
+const MAX_SYMBOL_LEN = 12;
+const DISCRIMINATOR = 8;
+
+function tierFromU8(v: number): Tier {
+  switch (v) {
+    case 1: return "tier_1";
+    case 2: return "tier_2";
+    case 3: return "tier_3";
+    case 4: return "quarantined";
+    default: return "tier_2";
+  }
+}
+
+function policyStateFromU8(v: number): PolicyState {
+  switch (v) {
+    case 0: return "pending";
+    case 1: return "active";
+    case 2: return "settled";
+    case 3: return "claimed";
+    case 4: return "expired";
+    default: return "pending";
+  }
+}
