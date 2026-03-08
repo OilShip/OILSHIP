@@ -108,3 +108,151 @@ function policyStateFromU8(v: number): PolicyState {
     default: return "pending";
   }
 }
+
+function vesselClassFromU8(v: number): VesselClass {
+  switch (v) {
+    case 0: return "coaster";
+    case 1: return "tanker";
+    case 2: return "capesize";
+    case 3: return "dark_fleet";
+    default: return "tanker";
+  }
+}
+
+export function decodeBridge(buf: Uint8Array): Bridge {
+  const r = new Reader(buf);
+  r.skip(DISCRIMINATOR);
+  const symbol = r.fixedString(MAX_SYMBOL_LEN);
+  const name = r.fixedString(MAX_NAME_LEN);
+  const operator = r.pubkey();
+  const riskScore = r.u8();
+  const tierByte = r.u8();
+  const routable = r.bool();
+  const quarantined = r.bool();
+  const lastUpdateSlot = r.u64();
+  const openPolicies = r.u32();
+  const openCoverage = r.u64();
+  const _throughputSlot = r.u64();
+  const _throughputCount = r.u32();
+  const lifetimeTolls = r.u64();
+  const lifetimePayouts = r.u64();
+  const quarantineCount = r.u16();
+  return {
+    symbol,
+    name,
+    operator,
+    riskScore,
+    tier: tierFromU8(tierByte),
+    routable,
+    quarantined,
+    lastUpdateSlot,
+    openPolicies,
+    openCoverage,
+    lifetimeTolls,
+    lifetimePayouts,
+    quarantineCount,
+  };
+}
+
+export function decodePolicy(addr: Pubkey, buf: Uint8Array): Policy {
+  const r = new Reader(buf);
+  r.skip(DISCRIMINATOR);
+  const beneficiary = r.pubkey();
+  const bridge = r.pubkey();
+  const _convoy = r.pubkey();
+  const cargo = r.u64();
+  const tollPaid = r.u64();
+  const riskAtOpen = r.u8();
+  const classByte = r.u8();
+  const openedSlot = r.u64();
+  const matureSlot = r.u64();
+  const expiresSlot = r.u64();
+  const stateByte = r.u8();
+  return {
+    pubkey: addr,
+    beneficiary,
+    bridge,
+    cargo,
+    tollPaid,
+    riskAtOpen,
+    vesselClass: vesselClassFromU8(classByte),
+    openedSlot,
+    matureSlot,
+    expiresSlot,
+    state: policyStateFromU8(stateByte),
+  };
+}
+
+export function decodeWreckFund(buf: Uint8Array): WreckFundView {
+  const r = new Reader(buf);
+  r.skip(DISCRIMINATOR);
+  const authority = r.pubkey();
+  const balance = r.u64();
+  const openCoverage = r.u64();
+  const lifetimeDeposits = r.u64();
+  const lifetimePayouts = r.u64();
+  const payoutCount = r.u64();
+  return {
+    authority,
+    balance,
+    openCoverage,
+    lifetimeDeposits,
+    lifetimePayouts,
+    payoutCount,
+  };
+}
+
+export function decodeTreasury(buf: Uint8Array): TreasuryView {
+  const r = new Reader(buf);
+  r.skip(DISCRIMINATOR);
+  const authority = r.pubkey();
+  const balance = r.u64();
+  const lifetimeIn = r.u64();
+  const lifetimeOut = r.u64();
+  return { authority, balance, lifetimeIn, lifetimeOut };
+}
+
+export function decodeGlobalConfig(buf: Uint8Array): GlobalConfigView {
+  const r = new Reader(buf);
+  r.skip(DISCRIMINATOR);
+  const admin = r.pubkey();
+  const oilMint = r.pubkey();
+  const treasury = r.pubkey();
+  const wreckFund = r.pubkey();
+  const tollBps = r.u16();
+  const fundSplitBps = r.u16();
+  const buybackSplitBps = r.u16();
+  const opsSplitBps = r.u16();
+  const bridgesRegistered = r.u16();
+  const policiesOpened = r.u64();
+  const policiesSettled = r.u64();
+  const wreckClaimsPaid = r.u64();
+  const lifetimeTolls = r.u64();
+  const lifetimePayouts = r.u64();
+  const paused = r.bool();
+  return {
+    admin,
+    oilMint,
+    treasury,
+    wreckFund,
+    tollBps,
+    fundSplitBps,
+    buybackSplitBps,
+    opsSplitBps,
+    bridgesRegistered,
+    policiesOpened,
+    policiesSettled,
+    wreckClaimsPaid,
+    lifetimeTolls,
+    lifetimePayouts,
+    paused,
+  };
+}
+
+export function isAccount(buf: Uint8Array, expectedDiscriminator: Uint8Array): boolean {
+  if (buf.length < 8) return false;
+  for (let i = 0; i < 8; i++) {
+    if (buf[i] !== expectedDiscriminator[i]) return false;
+  }
+  return true;
+}
