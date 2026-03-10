@@ -43,3 +43,62 @@ export class TransportError extends OilshipError {
     this.name = "TransportError";
   }
 }
+
+export class ProgramError extends OilshipError {
+  public readonly programCode: number;
+  public readonly programLog: string[];
+  constructor(programCode: number, programLog: string[]) {
+    super("PROGRAM", `on-chain program error ${programCode}`, { programCode });
+    this.programCode = programCode;
+    this.programLog = programLog;
+    this.name = "ProgramError";
+  }
+}
+
+export function asTransport(err: unknown): TransportError {
+  if (err instanceof TransportError) return err;
+  if (err instanceof Error) return new TransportError(err.message, err);
+  return new TransportError(String(err));
+}
+
+export function programCodeName(code: number): string {
+  return PROGRAM_ERROR_NAMES[code] ?? `Unknown(${code})`;
+}
+
+const PROGRAM_ERROR_NAMES: Record<number, string> = {
+  6000: "AlreadyInitialized",
+  6001: "NotAdmin",
+  6002: "NotBridgeOperator",
+  6003: "InvalidBridgeName",
+  6004: "InvalidBridgeSymbol",
+  6005: "BridgeRegistryFull",
+  6006: "BridgeNotFound",
+  6007: "BridgeQuarantined",
+  6008: "InvalidRiskScore",
+  6009: "TollTooHigh",
+  6010: "InvalidSplit",
+  6011: "CargoTooSmall",
+  6012: "CargoTooLarge",
+  6013: "PolicyTooShort",
+  6014: "PolicyTooLong",
+  6015: "PolicyAlreadySettled",
+  6016: "PolicyNotMature",
+  6017: "PolicyExpired",
+  6018: "BeneficiaryMismatch",
+  6019: "InsufficientReserve",
+  6020: "ReserveRatioBreach",
+  6021: "ConvoyFull",
+  6022: "ConvoyWindowClosed",
+  6023: "MathOverflow",
+  6024: "MathUnderflow",
+  6025: "DivisionByZero",
+  6026: "Paused",
+  6027: "AccountMismatch",
+  6028: "PdaMismatch",
+  6029: "OperatorAlreadyRegistered",
+  6030: "CoverageCapExceeded",
+  6031: "BridgeStillHealthy",
+  6032: "ClaimWindowClosed",
+  6033: "AlreadyClaimed",
+  6034: "ThroughputExceeded",
+};
