@@ -118,3 +118,24 @@ export class Escort {
       derivedPolicyAccount: this.client.deriveBridge(route.bridgeAccount.symbol),
     };
   }
+
+  async listFleet(): Promise<Bridge[]> {
+    return this.bridges.list();
+  }
+
+  async fundHealth() {
+    return this.fund.health();
+  }
+
+  static renderQuote(q: EscortQuote): string {
+    return [
+      `OILSHIP escort quote`,
+      `  bridge   : ${q.bridge.symbol}`,
+      `  cargo    : ${fmtSol(q.cargo)}`,
+      `  toll     : ${fmtSol(q.riskAdjustedToll)} (${fmtBps(Number((q.riskAdjustedToll * 10_000n) / q.cargo))})`,
+      `  tier     : ${q.tier}`,
+      `  risk     : ${q.riskScore} / 100`,
+      `  class    : ${q.vesselClass}`,
+    ].join("\n");
+  }
+}
