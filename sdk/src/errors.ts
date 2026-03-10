@@ -18,3 +18,28 @@ export class ValidationError extends OilshipError {
     this.name = "ValidationError";
   }
 }
+
+export class QuarantinedError extends OilshipError {
+  constructor(bridge: string) {
+    super("QUARANTINED", `bridge ${bridge} is quarantined`, { bridge });
+    this.name = "QuarantinedError";
+  }
+}
+
+export class CapacityError extends OilshipError {
+  constructor(requested: bigint, available: bigint) {
+    super(
+      "CAPACITY",
+      `wreck fund cannot cover ${requested} (available ${available})`,
+      { requested: requested.toString(), available: available.toString() }
+    );
+    this.name = "CapacityError";
+  }
+}
+
+export class TransportError extends OilshipError {
+  constructor(message: string, cause?: unknown) {
+    super("TRANSPORT", message, { cause: String(cause) });
+    this.name = "TransportError";
+  }
+}
