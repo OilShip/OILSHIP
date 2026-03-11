@@ -61,3 +61,43 @@ export function formatQuote(q: EscortQuote): string {
     `  vessel class  ${q.vesselClass}`,
   ].join("\n");
 }
+
+function effectiveBps(cargo: Lamports, toll: Lamports): string {
+  if (cargo === 0n) return "0.00%";
+  const bps = Number((toll * 10_000n) / cargo);
+  return fmtBps(bps);
+}
+
+export function formatNumber(n: bigint, locale = "en-US"): string {
+  return n.toLocaleString(locale);
+}
+
+export function formatDuration(slots: bigint): string {
+  const SLOT_MS = 400n;
+  const totalMs = slots * SLOT_MS;
+  const seconds = Number(totalMs / 1000n);
+  const m = Math.floor(seconds / 60) % 60;
+  const h = Math.floor(seconds / 3600) % 24;
+  const d = Math.floor(seconds / 86400);
+  const parts = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0) parts.push(`${m}m`);
+  if (parts.length === 0) parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
+
+export function table(rows: Array<Record<string, string | number>>): string {
+  if (rows.length === 0) return "";
+  const headers = Object.keys(rows[0]);
+  const widths = headers.map((h) =>
+    Math.max(h.length, ...rows.map((r) => String(r[h]).length))
+  );
+  const fmt = (cells: string[]) =>
+    cells.map((c, i) => c.padEnd(widths[i])).join("  ");
+  const lines = [fmt(headers), fmt(widths.map((w) => "-".repeat(w)))];
+  for (const r of rows) {
+    lines.push(fmt(headers.map((h) => String(r[h]))));
+  }
+  return lines.join("\n");
+}
