@@ -20,3 +20,44 @@ export function formatBridge(b: Bridge): string {
     `  lifetime toll ${fmtSol(b.lifetimeTolls)}`,
   ].join("\n");
 }
+
+export function formatPolicy(p: Policy): string {
+  return [
+    `policy ${fmtPubkey(p.pubkey)}`,
+    `  beneficiary ${fmtPubkey(p.beneficiary)}`,
+    `  bridge      ${fmtPubkey(p.bridge)}`,
+    `  cargo       ${fmtSol(p.cargo)}`,
+    `  toll paid   ${fmtSol(p.tollPaid)}`,
+    `  risk @ open ${p.riskAtOpen}`,
+    `  class       ${p.vesselClass}`,
+    `  state       ${p.state}`,
+    `  matures     slot ${p.matureSlot}`,
+    `  expires     slot ${p.expiresSlot}`,
+  ].join("\n");
+}
+
+export function formatWreckFund(v: WreckFundView): string {
+  return [
+    `Wreck Fund`,
+    `  authority      ${fmtPubkey(v.authority)}`,
+    `  reserve        ${fmtSol(v.balance)}`,
+    `  open coverage  ${fmtSol(v.openCoverage)}`,
+    `  lifetime in    ${fmtSol(v.lifetimeDeposits)}`,
+    `  lifetime out   ${fmtSol(v.lifetimePayouts)}`,
+    `  payouts        ${v.payoutCount}`,
+  ].join("\n");
+}
+
+export function formatQuote(q: EscortQuote): string {
+  return [
+    `OILSHIP escort quote`,
+    `  bridge        ${q.bridge.symbol}`,
+    `  cargo         ${fmtSol(q.cargo)}`,
+    `  base toll     ${fmtSol(q.baseToll)}`,
+    `  risk-adjusted ${fmtSol(q.riskAdjustedToll)}`,
+    `  effective bps ${effectiveBps(q.cargo, q.riskAdjustedToll)}`,
+    `  tier          ${TIER_LABEL[q.tier]}`,
+    `  risk score    ${q.riskScore} / 100`,
+    `  vessel class  ${q.vesselClass}`,
+  ].join("\n");
+}
