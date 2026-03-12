@@ -19,3 +19,6 @@ export type { DepositRequest, WreckHealth } from "./wreckFund.js";
 export { Escort } from "./escort.js";
 export type { EscortOpenInput, EscortQuoteInput, PreparedOpen } from "./escort.js";
 export { QuoteBuilder } from "./quote.js";
+
+export const VERSION = "0.1.0";
+export const DEFAULT_TOLL_BPS = 10;
