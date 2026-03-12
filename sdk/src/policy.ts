@@ -38,3 +38,34 @@ export class Policies {
     const base = bpsOf(cargo, baseTollBps);
     return (base * BigInt(riskMult)) / 10_000n;
   }
+
+  vesselFor(cargo: Lamports): VesselClass {
+    return classFromCargo(cargo);
+  }
+
+  toLifetimeSlots(hours: number): bigint {
+    return hoursToSlots(hours);
+  }
+
+  toExpirySlots(days: number): bigint {
+    return daysToSlots(days);
+  }
+
+  async fetch(addr: Pubkey): Promise<Policy | null> {
+    return this.client.fetchPolicy(addr);
+  }
+
+  async isMature(addr: Pubkey): Promise<boolean> {
+    const p = await this.fetch(addr);
+    if (!p) return false;
+    const slot = await this.client.getSlot();
+    return slot >= p.matureSlot && slot <= p.expiresSlot;
+  }
+
+  async isExpired(addr: Pubkey): Promise<boolean> {
+    const p = await this.fetch(addr);
+    if (!p) return false;
+    const slot = await this.client.getSlot();
+    return slot > p.expiresSlot;
+  }
+}
