@@ -40,3 +40,40 @@ export class QuoteBuilder {
     if (candidates.length === 0) {
       throw new ValidationError("no eligible bridges");
     }
+
+    const preferred = req.preferredBridge?.toLowerCase();
+    candidates.sort((a, b) => {
+      const aPref = preferred && a.symbol.toLowerCase() === preferred ? -1 : 0;
+      const bPref = preferred && b.symbol.toLowerCase() === preferred ? -1 : 0;
+      if (aPref !== bPref) return aPref - bPref;
+      return a.riskScore - b.riskScore;
+    });
+
+    const winner = candidates[0];
+    const baseToll = bpsOf(req.cargo, req.baseTollBps);
+    const adjusted = applyRiskMultiplier(baseToll, winner.riskScore);
+
+    return {
+      bridge: bridgeIdFromSymbol(winner.symbol, pubkey(PLACEHOLDER_PROGRAM)),
+      cargo: req.cargo,
+      baseToll,
+      riskAdjustedToll: adjusted,
+      tier: tierFromScore(winner.riskScore),
+      riskScore: winner.riskScore,
+      vesselClass: classFromCargo(req.cargo),
+      validUntilSlot: 0n,
+    };
+  }
+
+  static breakdown(quote: EscortQuote): { label: string; value: string }[] {
+    return [
+      { label: "bridge",        value: quote.bridge.symbol },
+      { label: "cargo",         value: `${quote.cargo} lamports` },
+      { label: "base toll",     value: `${quote.baseToll} lamports` },
+      { label: "risk-adjusted", value: `${quote.riskAdjustedToll} lamports` },
+      { label: "tier",          value: quote.tier },
+      { label: "risk score",    value: `${quote.riskScore} / 100` },
+      { label: "vessel class",  value: quote.vesselClass },
+    ];
+  }
+}
