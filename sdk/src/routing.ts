@@ -63,3 +63,37 @@ export class Router {
       if (tollCmp !== 0n) return tollCmp < 0n ? -1 : 1;
       return a.riskScore - c.riskScore;
     });
+
+    return candidates;
+  }
+
+  async best(req: RouteRequest, bridges: Bridge[]): Promise<RouteCandidate> {
+    const list = await this.pickRoutes(req, bridges);
+    if (list.length === 0) {
+      throw new CapacityError(req.cargo, 0n);
+    }
+    return list[0];
+  }
+
+  static formatReport(routes: RouteCandidate[]): string {
+    const lines = [
+      "OILSHIP route plan",
+      "------------------------------------------",
+    ];
+    for (const r of routes) {
+      lines.push(
+        `${r.bridgeAccount.symbol.padEnd(12)} | ${tierLabel(r.tier).padEnd(20)} | risk ${String(r.riskScore).padStart(3)} | toll ${r.expectedToll.toString()}`
+      );
+    }
+    return lines.join("\n");
+  }
+}
+
+function tierOrder(t: Tier): number {
+  switch (t) {
+    case "tier_1": return 0;
+    case "tier_2": return 1;
+    case "tier_3": return 2;
+    case "quarantined": return 3;
+  }
+}
