@@ -98,3 +98,52 @@ export interface EscortQuote {
   vesselClass: VesselClass;
   validUntilSlot: bigint;
 }
+
+export interface OpenPolicyResult {
+  signature: string;
+  policy: Pubkey;
+  toll: Lamports;
+}
+
+export interface TxResult {
+  signature: string;
+}
+
+export interface Anomaly {
+  kind: string;
+  severity: "info" | "low" | "medium" | "high" | "critical";
+  message: string;
+  capturedAt: number;
+  source: string;
+}
+
+export interface RiskAssessment {
+  bridge: BridgeId;
+  score: number;
+  tier: Tier;
+  computedAt: number;
+  factors: { name: string; contribution: number; note: string }[];
+}
+
+export interface ClientOptions {
+  rpcUrl: string;
+  programId: Pubkey;
+  commitment?: "processed" | "confirmed" | "finalized";
+  fetcher?: typeof fetch;
+}
+
+export function solToLamports(sol: number): Lamports {
+  if (sol < 0) throw new RangeError("sol must be non-negative");
+  return BigInt(Math.round(sol * 1e9));
+}
+
+export function lamportsToSol(l: Lamports): number {
+  return Number(l) / 1e9;
+}
+
+export function classFromCargo(cargo: Lamports): VesselClass {
+  if (cargo < LAMPORTS_PER_SOL) return "coaster";
+  if (cargo < 50n * LAMPORTS_PER_SOL) return "tanker";
+  if (cargo < 250n * LAMPORTS_PER_SOL) return "capesize";
+  return "dark_fleet";
+}
