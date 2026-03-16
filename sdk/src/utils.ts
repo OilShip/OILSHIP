@@ -74,3 +74,44 @@ export function bpsOf(value: Lamports, bps: number): Lamports {
   if (bps < 0 || bps > 10_000) throw new RangeError(`bps out of range: ${bps}`);
   return (value * BigInt(bps)) / 10_000n;
 }
+
+export function riskMultiplierBps(score: number): number {
+  if (score <= 20) return 9_500;
+  if (score <= 40) return 10_000;
+  if (score <= 60) return 11_500;
+  if (score <= 80) return 13_500;
+  return 19_000;
+}
+
+export function tierFromScore(score: number): Tier {
+  if (score <= 30) return "tier_1";
+  if (score <= 55) return "tier_2";
+  if (score <= 80) return "tier_3";
+  return "quarantined";
+}
+
+export function applyRiskMultiplier(baseToll: Lamports, score: number): Lamports {
+  const mult = BigInt(riskMultiplierBps(score));
+  return (baseToll * mult) / 10_000n;
+}
+
+const SLOT_MS = 400n;
+const SLOTS_PER_MIN = (60n * 1000n) / SLOT_MS;
+const SLOTS_PER_HOUR = SLOTS_PER_MIN * 60n;
+const SLOTS_PER_DAY = SLOTS_PER_HOUR * 24n;
+
+export function minutesToSlots(min: number): bigint {
+  return BigInt(min) * SLOTS_PER_MIN;
+}
+
+export function hoursToSlots(h: number): bigint {
+  return BigInt(h) * SLOTS_PER_HOUR;
+}
+
+export function daysToSlots(d: number): bigint {
+  return BigInt(d) * SLOTS_PER_DAY;
+}
+
+export function slotsToHours(slots: bigint): number {
+  return Number(slots / SLOTS_PER_HOUR);
+}
