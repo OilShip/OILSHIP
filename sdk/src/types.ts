@@ -18,3 +18,83 @@ export type Tier = "tier_1" | "tier_2" | "tier_3" | "quarantined";
 export type PolicyState = "pending" | "active" | "settled" | "claimed" | "expired";
 
 export type VesselClass = "coaster" | "tanker" | "capesize" | "dark_fleet";
+
+export interface BridgeId {
+  symbol: string;
+  pubkey: Pubkey;
+}
+
+export interface Bridge {
+  symbol: string;
+  name: string;
+  operator: Pubkey;
+  riskScore: number;
+  tier: Tier;
+  routable: boolean;
+  quarantined: boolean;
+  lastUpdateSlot: bigint;
+  openPolicies: number;
+  openCoverage: Lamports;
+  lifetimeTolls: Lamports;
+  lifetimePayouts: Lamports;
+  quarantineCount: number;
+}
+
+export interface Policy {
+  pubkey: Pubkey;
+  beneficiary: Pubkey;
+  bridge: Pubkey;
+  cargo: Lamports;
+  tollPaid: Lamports;
+  riskAtOpen: number;
+  vesselClass: VesselClass;
+  openedSlot: bigint;
+  matureSlot: bigint;
+  expiresSlot: bigint;
+  state: PolicyState;
+}
+
+export interface WreckFundView {
+  authority: Pubkey;
+  balance: Lamports;
+  openCoverage: Lamports;
+  lifetimeDeposits: Lamports;
+  lifetimePayouts: Lamports;
+  payoutCount: bigint;
+}
+
+export interface TreasuryView {
+  authority: Pubkey;
+  balance: Lamports;
+  lifetimeIn: Lamports;
+  lifetimeOut: Lamports;
+}
+
+export interface GlobalConfigView {
+  admin: Pubkey;
+  oilMint: Pubkey;
+  treasury: Pubkey;
+  wreckFund: Pubkey;
+  tollBps: number;
+  fundSplitBps: number;
+  buybackSplitBps: number;
+  opsSplitBps: number;
+  bridgesRegistered: number;
+  policiesOpened: bigint;
+  policiesSettled: bigint;
+  wreckClaimsPaid: bigint;
+  lifetimeTolls: Lamports;
+  lifetimePayouts: Lamports;
+  paused: boolean;
+}
+
+export interface EscortQuote {
+  bridge: BridgeId;
+  cargo: Lamports;
+  baseToll: Lamports;
+  riskAdjustedToll: Lamports;
+  tier: Tier;
+  riskScore: number;
+  vesselClass: VesselClass;
+  validUntilSlot: bigint;
+}
