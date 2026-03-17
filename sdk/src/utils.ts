@@ -115,3 +115,35 @@ export function daysToSlots(d: number): bigint {
 export function slotsToHours(slots: bigint): number {
   return Number(slots / SLOTS_PER_HOUR);
 }
+
+export function fmtSol(l: Lamports, decimals = 4): string {
+  const sol = Number(l) / 1e9;
+  return sol.toFixed(decimals) + " SOL";
+}
+
+export function fmtBps(bps: number): string {
+  return (bps / 100).toFixed(2) + "%";
+}
+
+export function fmtPubkey(p: Pubkey, edge = 4): string {
+  if (p.length <= edge * 2 + 2) return p;
+  return `${p.slice(0, edge)}…${p.slice(-edge)}`;
+}
+
+export function assertPubkey(s: string): Pubkey {
+  return pubkey(s);
+}
+
+export function assertNonNegative(n: number, label: string): void {
+  if (n < 0) throw new RangeError(`${label} must be >= 0`);
+}
+
+export function assertBigPositive(b: bigint, label: string): void {
+  if (b <= 0n) throw new RangeError(`${label} must be > 0`);
+}
+
+export function clamp(n: number, low: number, high: number): number {
+  if (n < low) return low;
+  if (n > high) return high;
+  return n;
+}
