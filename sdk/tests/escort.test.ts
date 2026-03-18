@@ -68,3 +68,52 @@ test("riskMultiplierBps tiers", () => {
   assert.equal(riskMultiplierBps(60), 11_500);
   assert.equal(riskMultiplierBps(81), 19_000);
 });
+
+test("applyRiskMultiplier preserves order", () => {
+  const baseToll = 10_000n;
+  const low = applyRiskMultiplier(baseToll, 10);
+  const high = applyRiskMultiplier(baseToll, 90);
+  assert.ok(low < baseToll);
+  assert.ok(high > baseToll);
+});
+
+test("tierFromScore is monotonic", () => {
+  let lastIdx = -1;
+  const order = ["tier_1", "tier_2", "tier_3", "quarantined"] as const;
+  for (let s = 0; s <= 100; s++) {
+    const tier = tierFromScore(s);
+    const idx = order.indexOf(tier);
+    assert.ok(idx >= lastIdx, `tier index dropped at ${s}`);
+    lastIdx = idx;
+  }
+});
+
+test("hoursToSlots and daysToSlots agree", () => {
+  assert.equal(hoursToSlots(24), daysToSlots(1));
+  assert.equal(hoursToSlots(48), daysToSlots(2));
+});
+
+test("fmt helpers do not throw", () => {
+  fmtSol(1_500_000_000n);
+  fmtBps(125);
+  fmtPubkey("11111111111111111111111111111111" as ReturnType<typeof pubkey>);
+});
+
+test("computeRisk baseline", () => {
+  const r = computeRisk({ symbol: "x", pubkey: pubkey("11111111111111111111111111111111") }, []);
+  assert.equal(r.score, 18);
+  assert.equal(r.tier, "tier_1");
+});
+
+test("computeRisk critical event", () => {
+  const id = { symbol: "x", pubkey: pubkey("11111111111111111111111111111111") };
+  const r = computeRisk(id, [
+    { kind: "AdminKeyRotation", severity: "critical", message: "key moved", capturedAt: 0, source: "test" },
+  ]);
+  assert.ok(r.score > 18);
+});
+
+test("smoothScores trends to last value", () => {
+  const s = smoothScores([10, 20, 30, 40], 0.5);
+  assert.ok(s > 10 && s <= 40);
+});
