@@ -117,3 +117,63 @@ test("smoothScores trends to last value", () => {
   const s = smoothScores([10, 20, 30, 40], 0.5);
   assert.ok(s > 10 && s <= 40);
 });
+
+test("isSailable rejects quarantined", () => {
+  assert.equal(isSailable(20), true);
+  assert.equal(isSailable(99), false);
+});
+
+test("tollMultiplierBps matches utils", () => {
+  for (const score of [0, 30, 50, 70, 95]) {
+    assert.equal(tollMultiplierBps(score), riskMultiplierBps(score));
+  }
+});
+
+test("QuoteBuilder picks lowest risk", () => {
+  const bridges: Bridge[] = [
+    fakeBridge("a", 70),
+    fakeBridge("b", 12),
+    fakeBridge("c", 40),
+  ];
+  const q = QuoteBuilder.build({ cargo: solToLamports(1), baseTollBps: 10 }, bridges);
+  assert.equal(q.bridge.symbol, "b");
+});
+
+test("QuoteBuilder skips quarantined", () => {
+  const bridges: Bridge[] = [
+    fakeBridge("a", 5, true),
+    fakeBridge("b", 30),
+  ];
+  const q = QuoteBuilder.build({ cargo: solToLamports(1), baseTollBps: 10 }, bridges);
+  assert.equal(q.bridge.symbol, "b");
+});
+
+test("QuoteBuilder respects preferredBridge", () => {
+  const bridges: Bridge[] = [
+    fakeBridge("a", 5),
+    fakeBridge("b", 30),
+  ];
+  const q = QuoteBuilder.build(
+    { cargo: solToLamports(1), baseTollBps: 10, preferredBridge: "b" },
+    bridges,
+  );
+  assert.equal(q.bridge.symbol, "b");
+});
+
+test("QuoteBuilder rejects bad cargo", () => {
+  assert.throws(
+    () => QuoteBuilder.build({ cargo: 0n, baseTollBps: 10 }, [fakeBridge("a", 1)]),
+    ValidationError,
+  );
+});
+
+test("QuoteBuilder rejects no eligible bridges", () => {
+  assert.throws(
+    () =>
+      QuoteBuilder.build(
+        { cargo: solToLamports(1), baseTollBps: 10 },
+        [fakeBridge("a", 5, true)],
+      ),
+    ValidationError,
+  );
+});
