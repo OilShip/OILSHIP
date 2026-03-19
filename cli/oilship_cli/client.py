@@ -121,3 +121,40 @@ class OilshipRpc:
             return str(self._call("getHealth", []))
         except RpcError:
             return "unhealthy"
+
+    def airdrop(self, address: str, lamports: int) -> str:
+        return str(self._call("requestAirdrop", [address, lamports]))
+
+
+def lamports_to_sol(lamports: int) -> float:
+    return lamports / 1e9
+
+
+def sol_to_lamports(sol: float) -> int:
+    if sol < 0:
+        raise ValueError("sol must be non-negative")
+    return int(round(sol * 1e9))
+
+
+_B58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
+def _b58encode(buf: bytes) -> str:
+    n = int.from_bytes(buf, "big")
+    out = ""
+    while n > 0:
+        n, rem = divmod(n, 58)
+        out = _B58_ALPHABET[rem] + out
+    pad = 0
+    for byte in buf:
+        if byte == 0:
+            pad += 1
+        else:
+            break
+    return _B58_ALPHABET[0] * pad + out
+
+
+def decode_pubkey(blob: bytes) -> str:
+    if len(blob) != 32:
+        raise ValueError("pubkey must be 32 bytes")
+    return _b58encode(blob)
