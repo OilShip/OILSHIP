@@ -113,3 +113,41 @@ def cmd_quote(cfg: CliConfig, sol: float, bridge: str | None, max_risk: int | No
             border_style="orange3",
         )
     )
+
+
+def cmd_open(cfg: CliConfig, sol: float, bridge: str | None, hours: int) -> None:
+    console = make_console(cfg.color)
+    if sol <= 0:
+        console.print("[red]cargo must be > 0[/red]")
+        raise SystemExit(2)
+    if hours < 1 or hours > 48:
+        console.print("[red]lifetime must be between 1 and 48 hours[/red]")
+        raise SystemExit(2)
+    bridge = bridge or cfg.default_bridge
+    cargo = sol_to_lamports(sol)
+    console.print(f"prepared open: cargo={fmt_sol(cargo)} bridge={bridge} lifetime={hours}h")
+    console.print("[yellow]signing requires a wallet adapter — see SDK 'prepareOpen' for the binding.[/yellow]")
+
+
+def cmd_policy_list(cfg: CliConfig, beneficiary: str | None) -> None:
+    console = make_console(cfg.color)
+    if not beneficiary:
+        console.print("[red]--beneficiary required[/red]")
+        raise SystemExit(2)
+    with OilshipRpc(cfg.rpc_url) as rpc:
+        accounts = rpc.get_program_accounts(cfg.program_id)
+    console.print(f"found {len(accounts)} program-owned accounts; filtering not yet wired")
+
+
+def cmd_fund(cfg: CliConfig) -> None:
+    console = make_console(cfg.color)
+    view = {
+        "fund_balance": 0,
+        "open_coverage": 0,
+        "reserve_ratio_bps": 10_000,
+        "lifetime_tolls": 0,
+        "lifetime_payouts": 0,
+        "wreck_claims_paid": 0,
+        "bridges_registered": 4,
+    }
+    console.print(render_pnl(view))
