@@ -151,3 +151,51 @@ def cmd_fund(cfg: CliConfig) -> None:
         "bridges_registered": 4,
     }
     console.print(render_pnl(view))
+
+
+def cmd_threat_simulate(cfg: CliConfig, file: Path) -> None:
+    console = make_console(cfg.color)
+    if not file.exists():
+        console.print(f"[red]anomaly file not found: {file}[/red]")
+        raise SystemExit(2)
+    raw = json.loads(file.read_text(encoding="utf-8"))
+    bridge = raw.get("bridge", "unknown")
+    anomalies = [Anomaly(**a) for a in raw.get("anomalies", [])]
+    assessment = compute_risk(bridge, anomalies)
+    console.print(
+        Panel.fit(
+            "\n".join(
+                [
+                    f"bridge   : {assessment.bridge}",
+                    f"score    : {assessment.score} / 100",
+                    f"tier     : {assessment.tier}",
+                    f"sailable : {is_sailable(assessment.score)}",
+                ]
+            ),
+            title="risk simulation",
+            border_style="cyan",
+        )
+    )
+    console.print(render_anomalies([asdict(a) for a in anomalies]))
+
+
+def cmd_threat_smooth(cfg: CliConfig, scores: list[int]) -> None:
+    console = make_console(cfg.color)
+    if not scores:
+        console.print("[red]provide at least one score[/red]")
+        raise SystemExit(2)
+    smoothed = smooth(scores)
+    console.print(f"input    : {scores}")
+    console.print(f"smoothed : {smoothed}")
+    console.print(f"tier     : {tier_for(smoothed)}")
+
+
+def cmd_config_show(cfg: CliConfig) -> None:
+    console = make_console(cfg.color)
+    console.print_json(data=cfg.as_dict())
+
+
+def cmd_config_save(cfg: CliConfig) -> None:
+    console = make_console(cfg.color)
+    cfg.save()
+    console.print(f"[green]saved[/green]")
