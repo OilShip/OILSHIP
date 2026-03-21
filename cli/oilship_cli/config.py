@@ -41,3 +41,37 @@ class CliConfig:
         for k, v in raw.items():
             if hasattr(self, k):
                 setattr(self, k, v)
+
+    def apply_env(self, env: dict[str, str]) -> None:
+        mapping = {
+            "RPC_URL": "rpc_url",
+            "PROGRAM_ID": "program_id",
+            "KEYPAIR": "keypair_path",
+            "DEFAULT_BRIDGE": "default_bridge",
+            "DEFAULT_LIFETIME_HOURS": "default_lifetime_hours",
+            "DEFAULT_MAX_RISK": "default_max_risk",
+            "COLOR": "color",
+            "JSON_OUTPUT": "json_output",
+        }
+        for key, attr in mapping.items():
+            value = env.get(ENV_PREFIX + key)
+            if value is None:
+                continue
+            current = getattr(self, attr)
+            if isinstance(current, bool):
+                setattr(self, attr, value.lower() not in ("0", "false", "no"))
+            elif isinstance(current, int):
+                try:
+                    setattr(self, attr, int(value))
+                except ValueError as exc:
+                    raise SystemExit(f"oilship: env {key} must be int") from exc
+            else:
+                setattr(self, attr, value)
+
+    def save(self, path: Path | None = None) -> None:
+        path = path or DEFAULT_CONFIG_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
