@@ -26,3 +26,32 @@ class DashboardRow:
     open_policies: int
     open_coverage_sol: float
     last_update_iso: str
+
+
+def make_layout() -> Layout:
+    layout = Layout()
+    layout.split_column(
+        Layout(name="header", size=3),
+        Layout(name="body"),
+        Layout(name="footer", size=3),
+    )
+    return layout
+
+
+def render_header() -> Panel:
+    title = Text("OILSHIP STRAIT CONVOY", style="bold orange3")
+    sub = Text(
+        f"  bridge escort for solana  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        style="dim",
+    )
+    body = Text.assemble(title, "\n", sub)
+    return Panel(body, border_style="orange3")
+
+
+def render_footer(total_bridges: int, healthy: int, quarantined: int) -> Panel:
+    text = Text.assemble(
+        ("bridges: ", "dim"), (str(total_bridges), "bold white"),
+        ("   healthy: ", "dim"), (str(healthy), "bold green"),
+        ("   quarantined: ", "dim"), (str(quarantined), "bold red"),
+    )
+    return Panel(text, border_style="cyan")
