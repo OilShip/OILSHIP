@@ -43,3 +43,48 @@ def root(
         cfg.json_output = True
     ctx.obj = cfg
 
+
+@app.command()
+def version():
+    """Print the CLI version."""
+    typer.echo(f"oilship-cli {__version__}")
+
+
+@app.command()
+def status(ctx: typer.Context):
+    """Show RPC, program and fleet status."""
+    cmds.cmd_status(ctx.obj)
+
+
+@app.command()
+def fleet(ctx: typer.Context, json_out: bool = typer.Option(False, "--json")):
+    """List the bridge fleet."""
+    cmds.cmd_fleet(ctx.obj, json_out)
+
+
+@app.command()
+def quote(
+    ctx: typer.Context,
+    sol: float = typer.Argument(..., help="Cargo size in SOL"),
+    bridge: str = typer.Option(None, "--bridge", "-b"),
+    max_risk: int = typer.Option(None, "--max-risk"),
+):
+    """Get an escort quote."""
+    cmds.cmd_quote(ctx.obj, sol, bridge, max_risk)
+
+
+@app.command(name="open")
+def open_(
+    ctx: typer.Context,
+    sol: float = typer.Argument(..., help="Cargo size in SOL"),
+    bridge: str = typer.Option(None, "--bridge", "-b"),
+    hours: int = typer.Option(4, "--hours", "-h"),
+):
+    """Prepare an open-policy transaction (does not sign)."""
+    cmds.cmd_open(ctx.obj, sol, bridge, hours)
+
+
+@app.command()
+def fund(ctx: typer.Context):
+    """Show wreck fund + treasury P&L."""
+    cmds.cmd_fund(ctx.obj)
