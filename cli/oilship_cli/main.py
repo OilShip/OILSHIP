@@ -88,3 +88,46 @@ def open_(
 def fund(ctx: typer.Context):
     """Show wreck fund + treasury P&L."""
     cmds.cmd_fund(ctx.obj)
+
+
+@policy_app.command("list")
+def policy_list(
+    ctx: typer.Context,
+    beneficiary: str = typer.Option(None, "--beneficiary"),
+):
+    """List policies for a beneficiary."""
+    cmds.cmd_policy_list(ctx.obj, beneficiary)
+
+
+@threat_app.command("simulate")
+def threat_simulate(
+    ctx: typer.Context,
+    file: Path = typer.Argument(..., help="JSON file with bridge + anomalies"),
+):
+    """Compute a provisional risk score from a JSON anomaly file."""
+    cmds.cmd_threat_simulate(ctx.obj, file)
+
+
+@threat_app.command("smooth")
+def threat_smooth(
+    ctx: typer.Context,
+    scores: list[int] = typer.Argument(..., help="Recent scores"),
+):
+    """EWMA-smooth a series of risk scores."""
+    cmds.cmd_threat_smooth(ctx.obj, scores)
+
+
+@config_app.command("show")
+def config_show(ctx: typer.Context):
+    """Print the active config."""
+    cmds.cmd_config_show(ctx.obj)
+
+
+@config_app.command("save")
+def config_save(ctx: typer.Context):
+    """Persist the active config to disk."""
+    cmds.cmd_config_save(ctx.obj)
+
+
+if __name__ == "__main__":
+    app()
