@@ -71,3 +71,52 @@ def render_text(report: DailyReport) -> str:
         out.append(f"  {r.bridge:<14} {r.score:>5}   {r.tier}")
     return "\n".join(out)
 
+
+def render_markdown(report: DailyReport) -> str:
+    lines = [
+        f"### OILSHIP daily report — `{report.generated_at}`",
+        "",
+        f"> **{report.headline}**",
+        "",
+        "| bridge | score | tier |",
+        "|---|---:|---|",
+    ]
+    for r in report.rows:
+        lines.append(f"| `{r.bridge}` | {r.score} | {r.tier} |")
+    lines.append("")
+    lines.append(
+        f"healthy: **{report.healthy_count}** · elevated: **{report.elevated_count}** · quarantined: **{report.quarantined_count}**"
+    )
+    return "\n".join(lines)
+
+
+def diff_assessments(
+    previous: dict[str, int],
+    latest: Iterable[RiskAssessment],
+) -> list[ReportRow]:
+    out: list[ReportRow] = []
+    for a in latest:
+        prev = previous.get(a.bridge, a.score)
+        delta = a.score - prev
+        note = ""
+        if delta > 0:
+            note = "score climbed"
+        elif delta < 0:
+            note = "score recovered"
+        out.append(
+            ReportRow(
+                bridge=a.bridge,
+                score=a.score,
+                tier=a.tier,
+                delta=delta,
+                note=note,
+            )
+        )
+    return out
+
+
+def summarise_tiers(rows: list[ReportRow]) -> dict[str, int]:
+    summary = {"tier_1": 0, "tier_2": 0, "tier_3": 0, "quarantined": 0}
+    for r in rows:
+        summary[r.tier] = summary.get(r.tier, 0) + 1
+    return summary
