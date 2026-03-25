@@ -30,3 +30,36 @@ SEVERITY_FACTOR: dict[str, float] = {
     "critical": 2.4,
 }
 
+
+@dataclass
+class Anomaly:
+    kind: str
+    severity: str
+    message: str
+    source: str = "manual"
+    captured_at: int = 0
+
+
+@dataclass
+class RiskFactor:
+    name: str
+    contribution: int
+    note: str
+
+
+@dataclass
+class RiskAssessment:
+    bridge: str
+    score: int
+    tier: str
+    factors: list[RiskFactor] = field(default_factory=list)
+
+
+def tier_for(score: int) -> str:
+    if score <= 30:
+        return "tier_1"
+    if score <= 55:
+        return "tier_2"
+    if score <= 80:
+        return "tier_3"
+    return "quarantined"
