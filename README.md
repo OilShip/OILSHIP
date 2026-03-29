@@ -174,3 +174,57 @@ classDiagram
 ```
 
 ---
+
+## Token economics
+
+`$OIL` is the company share. There is no governance theatre and no
+roadmap — the protocol does one thing and the share captures cashflow
+from that one thing.
+
+```
+toll = bpsOf(cargo, 10) * risk_multiplier(score)
+   |
+   +-- 60 % --> wreck_fund    (grows the coverage cap)
+   +-- 30 % --> $OIL buyback  (direct to holders)
+   +-- 10 % --> operations    (RPCs, signers, infra)
+```
+
+| Quantity | How it is computed |
+|---|---|
+| **NAV**   | `wreck_fund + accrued_tolls − open_risk` |
+| **APR**   | `(tolls − payouts) / wreck_fund` |
+| **Floor** | `wreck_fund / circulating_supply` |
+| **TAM**   | Solana monthly bridge inflow, measurable on chain |
+
+There is no whitepaper. There is no fake metric.
+
+---
+
+## Repository layout
+
+```
+product/
+├── README.md
+├── assets/
+│   ├── banner.png
+│   └── logo.png
+├── programs/oilship/        rust + anchor on-chain program
+├── watch/                   rust monitoring engine
+├── sdk/                     typescript sdk
+├── cli/                     python typer cli
+└── docs/architecture.md
+```
+
+---
+
+## Installation
+
+```bash
+git clone <this repository>
+cd product
+```
+
+Each component has its own build instructions in the respective
+sub-directory.
+
+---
