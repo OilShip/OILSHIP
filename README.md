@@ -68,3 +68,109 @@ flowchart LR
   CL -- payout --> U
   SP -- release --> WF
 ```
+
+The fleet is built from four pieces of software, all in this repo
+under `product/`:
+
+| Path | What it is | Stack |
+|---|---|---|
+| `programs/oilship/` | The on-chain program. | Rust + Anchor |
+| `watch/`            | The monitoring engine. | Rust + Tokio |
+| `sdk/`              | The TypeScript SDK. Zero runtime deps. | TypeScript |
+| `cli/`              | The operator CLI. | Python + Typer |
+
+---
+
+## Mechanism
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant SDK as SDK
+  participant P as Anchor program
+  participant W as Wreck Fund
+  participant E as Watch Engine
+
+  U->>SDK: cargo + lifetime
+  SDK->>P: open_policy(cargo, lifetime)
+  P->>W: earmark coverage
+  P-->>U: policy account
+  loop every poll
+    E->>P: update_risk(score)
+  end
+  alt healthy
+    U->>P: settle_policy()
+    P->>W: release earmark
+  else quarantined
+    U->>P: claim_payout()
+    P->>W: pay principal back
+    W-->>U: lamports same block
+  end
+```
+
+The toll a user pays is the **base toll** (10 bps of cargo) multiplied
+by a **risk multiplier** read off the bridge's current score:
+
+| Score | Multiplier |
+|------:|-----------:|
+| 0–20  | 0.95×      |
+| 21–40 | 1.00×      |
+| 41–60 | 1.15×      |
+| 61–80 | 1.35×      |
+| 81+   | 1.90×      |
+
+Above score 80, the bridge is **quarantined** and the protocol refuses
+to open new policies on it altogether.
+
+---
+
+## On-chain accounts
+
+```mermaid
+classDiagram
+  class GlobalConfig {
+    Pubkey admin
+    Pubkey wreckFund
+    u16 tollBps
+    u16 fundSplitBps
+    u16 buybackSplitBps
+    u16 opsSplitBps
+    bool paused
+  }
+  class Bridge {
+    String symbol
+    Pubkey operator
+    u8 riskScore
+    u8 tier
+    bool routable
+    bool quarantined
+    u32 openPolicies
+    u64 openCoverage
+  }
+  class Policy {
+    Pubkey beneficiary
+    Pubkey bridge
+    u64 cargo
+    u64 tollPaid
+    u8 riskAtOpen
+    u8 class
+    u8 state
+  }
+  class WreckFund {
+    Pubkey authority
+    u64 balance
+    u64 openCoverage
+    u64 lifetimePayouts
+  }
+  class Treasury {
+    Pubkey authority
+    u64 balance
+  }
+  GlobalConfig --> WreckFund
+  GlobalConfig --> Treasury
+  GlobalConfig --> Bridge : registers
+  Bridge --> Policy : hosts
+  Policy --> WreckFund : earmarks
+```
+
+---
