@@ -73,3 +73,43 @@ def test_smooth_single():
 def test_smooth_trends_toward_last():
     s = smooth([10, 12, 14, 50])
     assert 14 < s <= 50
+
+
+def test_smooth_clamps():
+    s = smooth([200, 200, 200])
+    assert s <= 100
+
+
+def test_toll_multiplier_buckets():
+    assert toll_multiplier_bps(10) == 9_500
+    assert toll_multiplier_bps(30) == 10_000
+    assert toll_multiplier_bps(50) == 11_500
+    assert toll_multiplier_bps(70) == 13_500
+    assert toll_multiplier_bps(95) == 19_000
+
+
+def test_is_sailable():
+    assert is_sailable(0)
+    assert is_sailable(80)
+    assert not is_sailable(81)
+    assert not is_sailable(100)
+
+
+def test_compute_factors_include_each_anomaly():
+    anomalies = [make("OracleDrift", "low"), make("TvlDrop", "medium")]
+    r = compute("mayan", anomalies)
+    names = {f.name for f in r.factors}
+    assert "baseline" in names
+    assert "OracleDrift" in names
+    assert "TvlDrop" in names
+
+
+def test_unknown_kind_uses_fallback_weight():
+    r = compute("mayan", [make("UnknownThing", "medium")])
+    assert r.score >= BASELINE_SCORE
+
+
+def test_severity_factor_scales_contribution():
+    low = compute("x", [make("TvlDrop", "low")]).score
+    high = compute("x", [make("TvlDrop", "high")]).score
+    assert high > low
