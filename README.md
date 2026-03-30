@@ -228,3 +228,57 @@ Each component has its own build instructions in the respective
 sub-directory.
 
 ---
+
+## Examples
+
+### Quote a transit
+
+```ts
+import { OilshipClient, Escort, solToLamports, pubkey } from "@oilship/sdk";
+
+const client = new OilshipClient({
+  rpcUrl: "https://api.mainnet-beta.solana.com",
+  programId: pubkey("11111111111111111111111111111111"),
+});
+const escort = new Escort(client, 10);
+
+const quote = await escort.quote({
+  cargo: solToLamports(1.5),
+  preferredBridge: "mayan",
+});
+console.log(Escort.renderQuote(quote));
+```
+
+### Watch a bridge
+
+```bash
+oilship-watch sample mayan
+```
+
+### Simulate a risk score
+
+```bash
+oilship threat simulate ./scenario.json
+```
+
+`scenario.json`:
+
+```json
+{
+  "bridge": "mayan",
+  "anomalies": [
+    { "kind": "TvlDrop", "severity": "high", "message": "tvl down 27% in 24h", "source": "watch" },
+    { "kind": "AdminKeyRotation", "severity": "critical", "message": "admin key moved twice", "source": "watch" }
+  ]
+}
+```
+
+---
+
+## Status
+
+OILSHIP is **pre-launch**. There are zero wrecks because there is zero
+exposure. The Wreck Fund is seeded at launch from the token raise, and
+the very first transit will be the team's own.
+
+Don't sail the strait alone.
