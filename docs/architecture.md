@@ -82,3 +82,55 @@ dApps use. Public surface area:
 - `errors.ts`         — typed error hierarchy
 
 ## 5. The Python CLI
+
+`oilship-cli` is the operator and shareholder control surface.
+
+```text
+oilship status         — RPC + program + fleet snapshot
+oilship fleet          — bridge table
+oilship quote 1.5      — escort quote for 1.5 SOL
+oilship open  1.5      — prepare an open-policy tx
+oilship fund           — wreck fund + treasury P&L
+oilship policy list    — policies for a beneficiary
+oilship threat simulate — local risk simulator
+oilship threat smooth   — EWMA-smooth a series of scores
+oilship config show     — print the active config
+oilship config save     — persist the active config
+```
+
+## 6. Cashflow
+
+```
+toll = bpsOf(cargo, 10) * risk_multiplier(score)
+ ├── 60 % → wreck_fund   (grows the coverage cap)
+ ├── 30 % → $OIL buyback (returned to holders)
+ └── 10 % → operations
+```
+
+## 7. Failure modes & responses
+
+| Failure | What the protocol does |
+|---|---|
+| Bridge TVL drops 25 % in 24 h | Watch engine raises score, possibly into Tier 3. |
+| Bridge admin key rotates | Score climbs by 30 + severity factor. |
+| Bridge is exploited | Watch engine quarantines the bridge. |
+| Wreck fund reserve ratio drops below 15 % | Program rejects new policies. |
+| Watch engine is offline | Routing still works against the last known score. |
+
+## 8. Threat model
+
+- The on-chain program is the trust root.
+- The watch engine is **untrusted by users**. The worst it can do is
+  raise a false alarm.
+- The wreck fund is held in a PDA. There is no human key that can
+  unilaterally drain it.
+
+## 9. Glossary
+
+- **Strait** — the bridge layer between Solana and another chain.
+- **Tanker** — a single open policy.
+- **Convoy** — a batch of policies opened in the same window.
+- **Wreck Fund** — the on-chain insurance pool.
+- **Wreck** — a payout event triggered by a quarantine.
+- **Pirate** — anyone running an exploit against a bridge.
+- **Class** — vessel class derived from cargo size.
