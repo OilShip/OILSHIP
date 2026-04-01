@@ -43,3 +43,27 @@ export function summarise(bridges: Bridge[]): FleetSummary {
     quarantinedCount: quarantined,
   };
 }
+
+export function topByCoverage(bridges: Bridge[], n = 3): Bridge[] {
+  return [...bridges]
+    .sort((a, b) => (a.openCoverage > b.openCoverage ? -1 : 1))
+    .slice(0, n);
+}
+
+export function safestBridge(bridges: Bridge[]): Bridge | null {
+  const sailable = bridges.filter((b) => !b.quarantined && b.routable);
+  if (sailable.length === 0) return null;
+  return sailable.sort((a, b) => a.riskScore - b.riskScore)[0];
+}
+
+export function diversityScore(bridges: Bridge[]): number {
+  const total = bridges.reduce((acc, b) => acc + b.openCoverage, 0n);
+  if (total === 0n || bridges.length <= 1) return 0;
+  let hhi = 0;
+  for (const b of bridges) {
+    const share = Number((b.openCoverage * 10_000n) / total) / 10_000;
+    hhi += share * share;
+  }
+  // 1 - HHI gives a 0..1 diversity index.
+  return Math.max(0, Math.min(1, 1 - hhi));
+}
