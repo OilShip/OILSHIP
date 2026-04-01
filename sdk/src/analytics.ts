@@ -67,3 +67,29 @@ export function diversityScore(bridges: Bridge[]): number {
   // 1 - HHI gives a 0..1 diversity index.
   return Math.max(0, Math.min(1, 1 - hhi));
 }
+
+export function projectMonthlyTolls(
+  cargosByDay: Lamports[],
+  averageBpsAfterRisk: number,
+): Lamports {
+  let total: Lamports = 0n;
+  for (const c of cargosByDay) {
+    total += (c * BigInt(averageBpsAfterRisk)) / 10_000n;
+  }
+  return total * 30n / BigInt(Math.max(1, cargosByDay.length));
+}
+
+export function asTable(summary: FleetSummary): string {
+  return [
+    `total bridges      ${summary.totalBridges}`,
+    `routable           ${summary.routableCount}`,
+    `quarantined        ${summary.quarantinedCount}`,
+    `tier_1             ${summary.byTier.tier_1}`,
+    `tier_2             ${summary.byTier.tier_2}`,
+    `tier_3             ${summary.byTier.tier_3}`,
+    `quarantined tier   ${summary.byTier.quarantined}`,
+    `average risk       ${summary.averageRisk.toFixed(2)}`,
+    `total open coverage ${summary.totalOpenCoverage.toString()}`,
+    `total lifetime tolls ${summary.totalLifetimeTolls.toString()}`,
+  ].join("\n");
+}
