@@ -33,3 +33,50 @@ export function clampBps(b: number): number {
   if (b > BPS_DENOM) return BPS_DENOM;
   return b;
 }
+
+export function bpsToFraction(bps: number): number {
+  return bps / BPS_DENOM;
+}
+
+export function fractionToBps(f: number): number {
+  return Math.round(f * BPS_DENOM);
+}
+
+export function splitInto(amount: Lamports, parts: number[]): Lamports[] {
+  const totalBps = parts.reduce((a, b) => a + b, 0);
+  if (totalBps !== BPS_DENOM) {
+    throw new RangeError(`split parts must sum to ${BPS_DENOM}, got ${totalBps}`);
+  }
+  const out: Lamports[] = [];
+  let used: Lamports = 0n;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const piece = applyBps(amount, parts[i]);
+    out.push(piece);
+    used += piece;
+  }
+  out.push(amount - used);
+  return out;
+}
+
+export function sumBps(values: Lamports[]): Lamports {
+  let total = 0n;
+  for (const v of values) total += v;
+  return total;
+}
+
+export function maxLamports(values: Lamports[]): Lamports {
+  let m: Lamports = 0n;
+  for (const v of values) {
+    if (v > m) m = v;
+  }
+  return m;
+}
+
+export function minLamports(values: Lamports[]): Lamports {
+  if (values.length === 0) return 0n;
+  let m = values[0];
+  for (const v of values) {
+    if (v < m) m = v;
+  }
+  return m;
+}
