@@ -71,3 +71,42 @@ export class EventEmitter<T> {
   size(): number {
     return this.listeners.size;
   }
+
+  clear(): void {
+    this.listeners.clear();
+  }
+}
+
+export class EventStream {
+  readonly riskUpdated = new EventEmitter<RiskUpdatedPayload>();
+  readonly policyOpened = new EventEmitter<PolicyOpenedPayload>();
+  readonly wreckPayout = new EventEmitter<WreckPayoutPayload>();
+  readonly bridgeQuarantined = new EventEmitter<Pubkey>();
+
+  dispatch(event: OilshipEvent): void {
+    switch (event.kind) {
+      case "RiskUpdated":
+        this.riskUpdated.emit(event.payload as unknown as RiskUpdatedPayload);
+        break;
+      case "PolicyOpened":
+        this.policyOpened.emit(event.payload as unknown as PolicyOpenedPayload);
+        break;
+      case "WreckPayout":
+        this.wreckPayout.emit(event.payload as unknown as WreckPayoutPayload);
+        break;
+      case "BridgeQuarantined":
+        this.bridgeQuarantined.emit(event.payload.bridge as Pubkey);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+export function summarisePolicy(p: Policy): string {
+  return `${p.vesselClass} carrying ${p.cargo} → ${p.bridge}`;
+}
+
+export function summariseBridge(b: Bridge): string {
+  return `${b.symbol} (${b.tier}, risk ${b.riskScore})`;
+}
