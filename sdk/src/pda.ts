@@ -65,3 +65,29 @@ function u64Le(v: bigint): Uint8Array {
 export function joinedConfigSeed(): Uint8Array {
   return joinSeeds(configSeeds());
 }
+
+export function joinedBridgeSeed(symbol: string): Uint8Array {
+  return joinSeeds(bridgeSeeds(symbol));
+}
+
+export function joinedPolicySeed(beneficiary: Pubkey, bridge: Pubkey, seed: bigint): Uint8Array {
+  return joinSeeds(policySeeds(beneficiary, bridge, seed));
+}
+
+export interface SeedSummary {
+  account: string;
+  seedCount: number;
+  totalBytes: number;
+}
+
+export function summarise(seeds: Uint8Array[], account: string): SeedSummary {
+  let total = 0;
+  for (const s of seeds) total += s.length;
+  return { account, seedCount: seeds.length, totalBytes: total };
+}
+
+export function lamportsForRent(bytes: number, lamportsPerByteYear = 3_480n): Lamports {
+  // Rough rent estimate. The on-chain rent sysvar is the source of
+  // truth; this helper exists for offline cost previews only.
+  return BigInt(bytes) * lamportsPerByteYear * 2n;
+}
