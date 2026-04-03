@@ -39,3 +39,37 @@ const FUND_SPLIT_BPS = 6_000;
 const BUYBACK_SPLIT_BPS = 3_000;
 const OPS_SPLIT_BPS = 1_000;
 const PLACEHOLDER_PROGRAM = "11111111111111111111111111111111";
+
+export class Simulator {
+  static run(scenario: Scenario): ScenarioResult {
+    if (scenario.cargo <= 0n) throw new ValidationError("cargo must be > 0");
+    if (scenario.bridges.length === 0) throw new ValidationError("bridges must not be empty");
+    const eligible = scenario.bridges.filter((b) => !b.quarantined && b.riskScore <= 80);
+    if (eligible.length === 0) throw new ValidationError("no eligible bridges");
+
+    const preferred = scenario.preferredBridge?.toLowerCase();
+    eligible.sort((a, b) => {
+      const aPref = preferred && a.symbol.toLowerCase() === preferred ? -1 : 0;
+      const bPref = preferred && b.symbol.toLowerCase() === preferred ? -1 : 0;
+      if (aPref !== bPref) return aPref - bPref;
+      return a.riskScore - b.riskScore;
+    });
+
+    const winner = eligible[0];
+    const baseToll = bpsOf(scenario.cargo, scenario.baseTollBps);
+    const adjustedToll = applyRiskMultiplier(baseToll, winner.riskScore);
+
+    const fundShare = bpsOf(adjustedToll, FUND_SPLIT_BPS);
+    const buybackShare = bpsOf(adjustedToll, BUYBACK_SPLIT_BPS);
+    const opsShare = bpsOf(adjustedToll, OPS_SPLIT_BPS);
+
+    const quote: EscortQuote = {
+      bridge: bridgeIdFromSymbol(winner.symbol, pubkey(PLACEHOLDER_PROGRAM)),
+      cargo: scenario.cargo,
+      baseToll,
+      riskAdjustedToll: adjustedToll,
+      tier: tierFromScore(winner.riskScore),
+      riskScore: winner.riskScore,
+      vesselClass: classFromCargo(scenario.cargo),
+      validUntilSlot: 0n,
+    };
