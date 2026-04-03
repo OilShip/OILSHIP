@@ -49,3 +49,40 @@ export function buildReceipt(input: ReceiptInput): Receipt {
     txSignature: input.txSignature,
   };
 }
+
+export function serialise(receipt: Receipt): string {
+  return JSON.stringify(receipt, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2);
+}
+
+export function deserialise(raw: string): Receipt {
+  const parsed = JSON.parse(raw);
+  return {
+    ...parsed,
+    cargo: BigInt(parsed.cargo),
+    baseToll: BigInt(parsed.baseToll),
+    riskAdjustedToll: BigInt(parsed.riskAdjustedToll),
+    policy: pubkey(parsed.policy),
+    beneficiary: pubkey(parsed.beneficiary),
+  };
+}
+
+export function renderReceipt(r: Receipt): string {
+  return [
+    `OILSHIP escort receipt`,
+    `  policy        ${r.policy}`,
+    `  beneficiary   ${r.beneficiary}`,
+    `  bridge        ${r.bridge}`,
+    `  cargo         ${fmtSol(r.cargo)}`,
+    `  base toll     ${fmtSol(r.baseToll)}`,
+    `  risk-adjusted ${fmtSol(r.riskAdjustedToll)}`,
+    `  tier          ${r.tier}`,
+    `  risk          ${r.riskScore} / 100`,
+    `  class         ${r.vesselClass}`,
+    `  signature     ${r.txSignature}`,
+  ].join("\n");
+}
+
+export function effectiveBpsFromReceipt(r: Receipt): string {
+  if (r.cargo === 0n) return "0.00%";
+  return fmtBps(Number((r.riskAdjustedToll * 10_000n) / r.cargo));
+}
