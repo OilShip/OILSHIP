@@ -73,3 +73,77 @@ export class Simulator {
       vesselClass: classFromCargo(scenario.cargo),
       validUntilSlot: 0n,
     };
+
+    return {
+      quote,
+      totalReserveImpact: scenario.cargo,
+      estimatedFundShare: fundShare,
+      estimatedBuybackShare: buybackShare,
+      estimatedOpsShare: opsShare,
+      vesselClass: classFromCargo(scenario.cargo),
+    };
+  }
+
+  static stressGrid(cargos: Lamports[], scores: number[]): ScenarioResult[] {
+    const out: ScenarioResult[] = [];
+    for (const cargo of cargos) {
+      for (const score of scores) {
+        const r = Simulator.run({
+          cargo,
+          baseTollBps: 10,
+          bridges: [{ symbol: "synthetic", riskScore: score }],
+        });
+        out.push(r);
+      }
+    }
+    return out;
+  }
+
+  static toCsv(results: ScenarioResult[]): string {
+    const header = "bridge,cargo,base_toll,adjusted_toll,fund_share,buyback_share,ops_share,risk,tier,class";
+    const lines = [header];
+    for (const r of results) {
+      const q = r.quote;
+      lines.push(
+        [
+          q.bridge.symbol,
+          q.cargo.toString(),
+          q.baseToll.toString(),
+          q.riskAdjustedToll.toString(),
+          r.estimatedFundShare.toString(),
+          r.estimatedBuybackShare.toString(),
+          r.estimatedOpsShare.toString(),
+          q.riskScore,
+          q.tier,
+          r.vesselClass,
+        ].join(","),
+      );
+    }
+    return lines.join("\n");
+  }
+}
+
+export function fakeBridges(): Bridge[] {
+  const PK = pubkey("11111111111111111111111111111111");
+  const make = (symbol: string, score: number): Bridge => ({
+    symbol,
+    name: symbol,
+    operator: PK,
+    riskScore: score,
+    tier: tierFromScore(score),
+    routable: true,
+    quarantined: false,
+    lastUpdateSlot: 0n,
+    openPolicies: 0,
+    openCoverage: 0n,
+    lifetimeTolls: 0n,
+    lifetimePayouts: 0n,
+    quarantineCount: 0,
+  });
+  return [
+    make("mayan", 12),
+    make("debridge", 22),
+    make("wormhole", 48),
+    make("allbridge", 71),
+  ];
+}
