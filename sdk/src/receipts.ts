@@ -86,3 +86,19 @@ export function effectiveBpsFromReceipt(r: Receipt): string {
   if (r.cargo === 0n) return "0.00%";
   return fmtBps(Number((r.riskAdjustedToll * 10_000n) / r.cargo));
 }
+
+export function compareReceipts(a: Receipt, b: Receipt): number {
+  return a.generatedAt - b.generatedAt;
+}
+
+export function totalCargoFor(receipts: Receipt[]): bigint {
+  let total = 0n;
+  for (const r of receipts) total += r.cargo;
+  return total;
+}
+
+export function totalTollFor(receipts: Receipt[]): bigint {
+  let total = 0n;
+  for (const r of receipts) total += r.riskAdjustedToll;
+  return total;
+}
