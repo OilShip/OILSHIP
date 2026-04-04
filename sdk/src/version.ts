@@ -11,3 +11,16 @@ export interface VersionInfo {
   anchor: string;
   node: string;
 }
+
+export function versionInfo(): VersionInfo {
+  return {
+    sdk: SDK_VERSION,
+    protocol: PROTOCOL_VERSION,
+    anchor: SUPPORTED_ANCHOR_VERSION,
+    node: MIN_NODE_VERSION,
+  };
+}
+
+export function isCompatibleProtocol(remote: string): boolean {
+  return remote.split(".").slice(0, 2).join(".") === PROTOCOL_VERSION;
+}
