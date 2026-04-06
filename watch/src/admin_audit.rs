@@ -41,3 +41,43 @@ impl AdminSeverity {
 pub struct AdminAuditLog {
     pub path: PathBuf,
 }
+
+impl AdminAuditLog {
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self { path: path.into() }
+    }
+
+    pub fn append(&self, action: &AdminAction) -> Result<()> {
+        if let Some(parent) = self.path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let mut f = OpenOptions::new().append(true).create(true).open(&self.path)?;
+        let line = serde_json::to_string(action)?;
+        writeln!(f, "{line}")?;
+        Ok(())
+    }
+
+    pub fn read_all(&self) -> Result<Vec<AdminAction>> {
+        if !self.path.exists() {
+            return Ok(vec![]);
+        }
+        let raw = std::fs::read_to_string(&self.path)?;
+        let mut out = vec![];
+        for line in raw.lines() {
+            if line.trim().is_empty() { continue; }
+            let parsed: AdminAction = serde_json::from_str(line)?;
+            out.push(parsed);
+        }
+        Ok(out)
+    }
+
+    pub fn count(&self) -> usize {
+        self.read_all().map(|v| v.len()).unwrap_or(0)
+    }
+}
+
+pub fn classify_actor(addr: &str) -> &'static str {
+    if addr.starts_with("11111") { "system" }
+    else if addr.len() < 32 { "unknown" }
+    else { "external" }
+}
