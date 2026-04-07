@@ -28,3 +28,47 @@ impl Filter for DenoiseFilter {
 }
 
 pub struct PauseDetectFilter;
+
+impl Filter for PauseDetectFilter {
+    fn name(&self) -> &'static str { "pause-detect" }
+
+    fn apply(&self, mut snap: BridgeSnapshot) -> BridgeSnapshot {
+        if let Some(v) = snap.raw.get("paused") {
+            if v.as_bool().unwrap_or(false) {
+                snap.anomalies.push(Anomaly {
+                    kind: AnomalyKind::PauseFlagSet,
+                    severity: Severity::High,
+                    message: "bridge reports its own pause flag".into(),
+                    captured_at: snap.captured_at,
+                    source: "pause-detect".into(),
+                });
+            }
+        }
+        snap
+    }
+}
+
+pub struct UpgradeDetectFilter;
+
+impl Filter for UpgradeDetectFilter {
+    fn name(&self) -> &'static str { "upgrade-detect" }
+
+    fn apply(&self, mut snap: BridgeSnapshot) -> BridgeSnapshot {
+        if let Some(v) = snap.raw.get("upgrade_authority") {
+            if !v.is_null() {
+                snap.anomalies.push(Anomaly {
+                    kind: AnomalyKind::ContractUpgrade,
+                    severity: Severity::Medium,
+                    message: "upgrade authority still set".into(),
+                    captured_at: snap.captured_at,
+                    source: "upgrade-detect".into(),
+                });
+            }
+        }
+        snap
+    }
+}
+
+pub struct FilterSet {
+    pub filters: Vec<Box<dyn Filter>>,
+}
