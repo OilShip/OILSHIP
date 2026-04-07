@@ -81,3 +81,41 @@ pub fn classify_actor(addr: &str) -> &'static str {
     else if addr.len() < 32 { "unknown" }
     else { "external" }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn empty_log_reads_empty() {
+        let dir = tempdir().unwrap();
+        let log = AdminAuditLog::new(dir.path().join("audit.jsonl"));
+        assert_eq!(log.count(), 0);
+    }
+
+    #[test]
+    fn round_trip_one_action() {
+        let dir = tempdir().unwrap();
+        let log = AdminAuditLog::new(dir.path().join("audit.jsonl"));
+        let action = AdminAction {
+            bridge: "mayan".into(),
+            action: "key_rotation".into(),
+            actor: "11111111111111111111111111111111".into(),
+            tx_signature: "abc".into(),
+            captured_at: 0,
+            severity: AdminSeverity::Critical,
+        };
+        log.append(&action).unwrap();
+        let back = log.read_all().unwrap();
+        assert_eq!(back.len(), 1);
+        assert_eq!(back[0].action, "key_rotation");
+    }
+
+    #[test]
+    fn severity_classifier() {
+        assert_eq!(AdminSeverity::from_action("key_rotation"), AdminSeverity::Critical);
+        assert_eq!(AdminSeverity::from_action("fee_change"), AdminSeverity::Notable);
+        assert_eq!(AdminSeverity::from_action("read"), AdminSeverity::Routine);
+    }
+}
