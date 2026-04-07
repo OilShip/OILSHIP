@@ -59,3 +59,26 @@ pub fn save_report(report: &BackfillReport, path: impl AsRef<Path>) -> Result<()
     std::fs::write(path, s)?;
     Ok(())
 }
+
+pub fn summarise(report: &BackfillReport) -> String {
+    format!(
+        "bridge={} samples={} score=[{}..{}] final_tier={}",
+        report.bridge, report.total_samples, report.min_score, report.max_score, report.final_tier,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_backfill_summary() {
+        let f = BackfillFile {
+            bridge_cfg: BridgeConfig::placeholder("x", "X"),
+            timeline: vec![],
+        };
+        let report = run(&f, &SignalSet::standard());
+        assert_eq!(report.total_samples, 0);
+        assert_eq!(report.max_score, 0);
+    }
+}
