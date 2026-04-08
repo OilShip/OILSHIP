@@ -99,3 +99,32 @@ fn parse_path(request_line: &str) -> String {
     let path = parts.next().unwrap_or("/");
     path.split('?').next().unwrap_or("/").to_string()
 }
+
+fn row_from(a: &RiskAssessment) -> AssessmentRow {
+    AssessmentRow {
+        bridge: a.bridge.to_string(),
+        score: a.score,
+        tier: format!("{:?}", a.tier),
+        computed_at: a.computed_at,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_get_root() {
+        assert_eq!(parse_path("GET / HTTP/1.1\r\n"), "/");
+    }
+
+    #[test]
+    fn parses_query_strings() {
+        assert_eq!(parse_path("GET /status?fmt=json HTTP/1.1\r\n"), "/status");
+    }
+
+    #[test]
+    fn parses_assessments() {
+        assert_eq!(parse_path("GET /assessments HTTP/1.1\r\n"), "/assessments");
+    }
+}
