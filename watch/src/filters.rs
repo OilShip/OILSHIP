@@ -72,3 +72,49 @@ impl Filter for UpgradeDetectFilter {
 pub struct FilterSet {
     pub filters: Vec<Box<dyn Filter>>,
 }
+
+impl FilterSet {
+    pub fn standard() -> Self {
+        Self {
+            filters: vec![
+                Box::new(DenoiseFilter { min_age_secs: 0 }),
+                Box::new(PauseDetectFilter),
+                Box::new(UpgradeDetectFilter),
+            ],
+        }
+    }
+
+    pub fn apply_all(&self, mut snap: BridgeSnapshot) -> BridgeSnapshot {
+        for f in &self.filters {
+            snap = f.apply(snap);
+        }
+        snap
+    }
+
+    pub fn names(&self) -> Vec<&'static str> {
+        self.filters.iter().map(|f| f.name()).collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::BridgeId;
+
+    #[test]
+    fn standard_filter_set_has_expected_names() {
+        let s = FilterSet::standard();
+        let names = s.names();
+        assert!(names.contains(&"denoise"));
+        assert!(names.contains(&"pause-detect"));
+        assert!(names.contains(&"upgrade-detect"));
+    }
+
+    #[test]
+    fn pause_filter_emits_anomaly() {
+        let mut snap = BridgeSnapshot::empty(BridgeId::new("x"));
+        snap.raw.insert("paused".into(), serde_json::Value::Bool(true));
+        let out = PauseDetectFilter.apply(snap);
+        assert!(out.anomalies.iter().any(|a| matches!(a.kind, AnomalyKind::PauseFlagSet)));
+    }
+}
