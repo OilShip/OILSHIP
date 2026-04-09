@@ -1,5 +1,7 @@
 # OILSHIP — Architecture
 
+> **Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Repo** · [OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
+
 This document describes the four components that ship in this
 repository, the contracts between them and the on-chain data they own.
 

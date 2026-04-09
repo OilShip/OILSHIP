@@ -1,12 +1,17 @@
 ![OILSHIP — Strait Convoy](./assets/banner.png)
 
-[![status](https://img.shields.io/badge/status-pre--launch-ff5b1f?style=for-the-badge)](#)
-[![chain](https://img.shields.io/badge/chain-solana-1c1c1f?style=for-the-badge)](#)
-[![program](https://img.shields.io/badge/program-anchor-ff5b1f?style=for-the-badge)](#)
-[![sdk](https://img.shields.io/badge/sdk-typescript-1c1c1f?style=for-the-badge)](#)
-[![cli](https://img.shields.io/badge/cli-python-ff5b1f?style=for-the-badge)](#)
-[![watch](https://img.shields.io/badge/watch-rust-1c1c1f?style=for-the-badge)](#)
-[![license](https://img.shields.io/badge/license-MIT-ff5b1f?style=for-the-badge)](#)
+[![website](https://img.shields.io/badge/website-oilship.xyz-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
+[![twitter](https://img.shields.io/badge/x-@Oilship2026-1c1c1f?style=for-the-badge&logo=x)](https://x.com/Oilship2026)
+[![github](https://img.shields.io/badge/github-OilShip%2FOILSHIP-ff5b1f?style=for-the-badge&logo=github)](https://github.com/OilShip/OILSHIP)
+[![status](https://img.shields.io/badge/status-pre--launch-1c1c1f?style=for-the-badge)](https://oilship.xyz/)
+[![chain](https://img.shields.io/badge/chain-solana-ff5b1f?style=for-the-badge)](https://solana.com)
+[![program](https://img.shields.io/badge/program-anchor-1c1c1f?style=for-the-badge)](#)
+[![sdk](https://img.shields.io/badge/sdk-typescript-ff5b1f?style=for-the-badge)](#)
+[![cli](https://img.shields.io/badge/cli-python-1c1c1f?style=for-the-badge)](#)
+[![watch](https://img.shields.io/badge/watch-rust-ff5b1f?style=for-the-badge)](#)
+[![license](https://img.shields.io/badge/license-MIT-1c1c1f?style=for-the-badge)](#)
+
+**Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Code** · [github.com/OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
 
 # OILSHIP — Strait Convoy
 
