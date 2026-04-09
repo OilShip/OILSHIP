@@ -3,13 +3,14 @@
 [![website](https://img.shields.io/badge/website-oilship.xyz-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
 [![twitter](https://img.shields.io/badge/x-@Oilship2026-1c1c1f?style=for-the-badge&logo=x)](https://x.com/Oilship2026)
 [![github](https://img.shields.io/badge/github-OilShip%2FOILSHIP-ff5b1f?style=for-the-badge&logo=github)](https://github.com/OilShip/OILSHIP)
+[![ci](https://img.shields.io/github/actions/workflow/status/OilShip/OILSHIP/ci.yml?branch=main&style=for-the-badge&label=ci)](https://github.com/OilShip/OILSHIP/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/OilShip/OILSHIP?style=for-the-badge)](./LICENSE)
 [![status](https://img.shields.io/badge/status-pre--launch-1c1c1f?style=for-the-badge)](https://oilship.xyz/)
 [![chain](https://img.shields.io/badge/chain-solana-ff5b1f?style=for-the-badge)](https://solana.com)
-[![program](https://img.shields.io/badge/program-anchor-1c1c1f?style=for-the-badge)](#)
-[![sdk](https://img.shields.io/badge/sdk-typescript-ff5b1f?style=for-the-badge)](#)
-[![cli](https://img.shields.io/badge/cli-python-1c1c1f?style=for-the-badge)](#)
-[![watch](https://img.shields.io/badge/watch-rust-ff5b1f?style=for-the-badge)](#)
-[![license](https://img.shields.io/badge/license-MIT-1c1c1f?style=for-the-badge)](#)
+[![program](https://img.shields.io/badge/program-anchor-1c1c1f?style=for-the-badge)](https://www.anchor-lang.com/)
+[![sdk](https://img.shields.io/badge/sdk-typescript-ff5b1f?style=for-the-badge)](./sdk)
+[![watch](https://img.shields.io/badge/watch-rust-1c1c1f?style=for-the-badge)](./watch)
+[![ticker](https://img.shields.io/badge/ticker-%24OIL-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
 
 **Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Code** · [github.com/OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
 
@@ -208,29 +209,49 @@ There is no whitepaper. There is no fake metric.
 ## Repository layout
 
 ```
-product/
+OILSHIP/
+├── Anchor.toml                workspace anchor manifest
+├── Cargo.toml                 rust workspace
+├── package.json               sdk workspace
 ├── README.md
+├── LICENSE
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── CHANGELOG.md
+├── .github/workflows/ci.yml
 ├── assets/
 │   ├── banner.png
 │   └── logo.png
-├── programs/oilship/        rust + anchor on-chain program
-├── watch/                   rust monitoring engine
-├── sdk/                     typescript sdk
-├── cli/                     python typer cli
+├── programs/oilship/          rust + anchor on-chain program
+├── watch/                     rust monitoring engine
+├── sdk/                       typescript sdk
+├── cli/                       python typer cli
 └── docs/architecture.md
 ```
 
 ---
 
-## Installation
+## Build
 
 ```bash
-git clone <this repository>
-cd product
+git clone https://github.com/OilShip/OILSHIP.git
+cd OILSHIP
+
+# on-chain program
+anchor build
+
+# risk scoring engine
+cargo build -p oilship-watch --release
+
+# typescript sdk
+npm install
+npm run build --workspace sdk
+
+# operator cli
+cd cli && pip install -e .
 ```
 
-Each component has its own build instructions in the respective
-sub-directory.
+Anchor 0.30+, Rust 1.78+, Node 20+, Python 3.12+.
 
 ---
 
@@ -287,3 +308,14 @@ exposure. The Wreck Fund is seeded at launch from the token raise, and
 the very first transit will be the team's own.
 
 Don't sail the strait alone.
+
+---
+
+## Links
+
+- **Website:** [oilship.xyz](https://oilship.xyz/)
+- **Docs:** [oilship.xyz/docs](https://oilship.xyz/docs/)
+- **X:** [@Oilship2026](https://x.com/Oilship2026)
+- **GitHub:** [OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
+- **Chain:** Solana
+- **Ticker:** $OIL
