@@ -12,7 +12,7 @@ jobs:
     name: rust
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: workspace check
         run: |
           test -f Cargo.toml && echo "workspace cargo manifest present"
@@ -28,7 +28,7 @@ jobs:
       run:
         working-directory: ./sdk
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: workspace check
         run: |
           test -f package.json && echo "sdk package.json present"
@@ -42,7 +42,7 @@ jobs:
       run:
         working-directory: ./cli
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: workspace check
         run: |
           test -f pyproject.toml && echo "cli pyproject.toml present"
@@ -51,7 +51,7 @@ jobs:
     name: docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: docs check
         run: |
           test -f README.md && echo "readme present"
@@ -66,7 +66,7 @@ jobs:
     name: community
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: community files check
         run: |
           test -f .github/CODEOWNERS && echo "codeowners present"
