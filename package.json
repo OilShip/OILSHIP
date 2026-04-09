@@ -1,7 +1,7 @@
 {
   "name": "oilship",
   "version": "0.1.0",
-  "description": "OILSHIP — convoy escort for Solana bridges. On-chain Wreck Fund, same-block payouts.",
+  "description": "OILSHIP - convoy escort for Solana bridges. On-chain Wreck Fund, same-block payouts.",
   "private": true,
   "license": "MIT",
   "homepage": "https://oilship.xyz",

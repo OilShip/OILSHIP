@@ -1,4 +1,4 @@
-# OILSHIP — Architecture
+# OILSHIP - Architecture
 
 > **Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Repo** · [OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
 
@@ -37,16 +37,16 @@ The Anchor program owns five account types:
 
 Every state-changing instruction is one of:
 
-- `initialize(params)`               — bootstrap the protocol
-- `register_bridge(params)`         — admin adds a bridge
-- `update_risk(score)`              — operator pushes a new risk score
-- `open_policy(params)`             — user opens a transit policy
-- `settle_policy()`                  — anyone settles a clean transit
-- `claim_payout()`                   — user claims a wreck payout
-- `deposit_fund(params)`            — anyone tops up the wreck fund
-- `set_paused(bool)`                 — admin pauses the protocol
-- `lift_quarantine()`                — admin lifts a bridge quarantine
-- `open_convoy(params)`             — open a convoy account
+- `initialize(params)`               - bootstrap the protocol
+- `register_bridge(params)`         - admin adds a bridge
+- `update_risk(score)`              - operator pushes a new risk score
+- `open_policy(params)`             - user opens a transit policy
+- `settle_policy()`                  - anyone settles a clean transit
+- `claim_payout()`                   - user claims a wreck payout
+- `deposit_fund(params)`            - anyone tops up the wreck fund
+- `set_paused(bool)`                 - admin pauses the protocol
+- `lift_quarantine()`                - admin lifts a bridge quarantine
+- `open_convoy(params)`             - open a convoy account
 
 ## 3. The watch engine
 
@@ -73,31 +73,31 @@ so a single extractor cannot dominate.
 `@oilship/sdk` is the binding library that frontends and integrating
 dApps use. Public surface area:
 
-- `OilshipClient`     — RPC adapter with high-level reads
-- `Bridges`           — registry helpers
-- `Router`            — picks the cheapest safe route
-- `Policies`          — opens / settles / claims policies
-- `WreckFund`         — reserve health and capacity checks
-- `Escort`            — top-level facade
-- `decoder.ts`        — binary decoder for every account type
-- `risk.ts`           — local replica of the watch engine's scoring
-- `errors.ts`         — typed error hierarchy
+- `OilshipClient`     - RPC adapter with high-level reads
+- `Bridges`           - registry helpers
+- `Router`            - picks the cheapest safe route
+- `Policies`          - opens / settles / claims policies
+- `WreckFund`         - reserve health and capacity checks
+- `Escort`            - top-level facade
+- `decoder.ts`        - binary decoder for every account type
+- `risk.ts`           - local replica of the watch engine's scoring
+- `errors.ts`         - typed error hierarchy
 
 ## 5. The Python CLI
 
 `oilship-cli` is the operator and shareholder control surface.
 
 ```text
-oilship status         — RPC + program + fleet snapshot
-oilship fleet          — bridge table
-oilship quote 1.5      — escort quote for 1.5 SOL
-oilship open  1.5      — prepare an open-policy tx
-oilship fund           — wreck fund + treasury P&L
-oilship policy list    — policies for a beneficiary
-oilship threat simulate — local risk simulator
-oilship threat smooth   — EWMA-smooth a series of scores
-oilship config show     — print the active config
-oilship config save     — persist the active config
+oilship status         - RPC + program + fleet snapshot
+oilship fleet          - bridge table
+oilship quote 1.5      - escort quote for 1.5 SOL
+oilship open  1.5      - prepare an open-policy tx
+oilship fund           - wreck fund + treasury P&L
+oilship policy list    - policies for a beneficiary
+oilship threat simulate - local risk simulator
+oilship threat smooth   - EWMA-smooth a series of scores
+oilship config show     - print the active config
+oilship config save     - persist the active config
 ```
 
 ## 6. Cashflow
@@ -129,10 +129,10 @@ toll = bpsOf(cargo, 10) * risk_multiplier(score)
 
 ## 9. Glossary
 
-- **Strait** — the bridge layer between Solana and another chain.
-- **Tanker** — a single open policy.
-- **Convoy** — a batch of policies opened in the same window.
-- **Wreck Fund** — the on-chain insurance pool.
-- **Wreck** — a payout event triggered by a quarantine.
-- **Pirate** — anyone running an exploit against a bridge.
-- **Class** — vessel class derived from cargo size.
+- **Strait** - the bridge layer between Solana and another chain.
+- **Tanker** - a single open policy.
+- **Convoy** - a batch of policies opened in the same window.
+- **Wreck Fund** - the on-chain insurance pool.
+- **Wreck** - a payout event triggered by a quarantine.
+- **Pirate** - anyone running an exploit against a bridge.
+- **Class** - vessel class derived from cargo size.

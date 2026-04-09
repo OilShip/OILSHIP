@@ -1,4 +1,4 @@
-![OILSHIP — Strait Convoy](./assets/banner.png)
+![OILSHIP](./assets/banner.png)
 
 [![website](https://img.shields.io/badge/website-oilship.xyz-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
 [![twitter](https://img.shields.io/badge/x-@Oilship2026-1c1c1f?style=for-the-badge&logo=x)](https://x.com/Oilship2026)
@@ -14,28 +14,24 @@
 
 **Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Code** · [github.com/OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
 
-# OILSHIP — Strait Convoy
+# OILSHIP
 
-> Solana has one chokepoint to the rest of crypto: **the bridges**.
-> Pirates wait there. OILSHIP is a convoy company that escorts your
-> transit, monitors the strait, and pays you out of its **Wreck Fund**
-> if anything sinks.
+On-chain bridge insurance for Solana. Anchor program + Rust risk engine + TypeScript SDK.
 
-Since 2021, cross-chain bridges have lost more than **$2.8 billion** to
-pirates. Wormhole. Ronin. Nomad. Multichain. Orbit. The pirates know
-exactly where to wait. The existing answer is "buy insurance from a DAO
-that votes on your claim for two weeks". That isn't insurance — that's
-a wake.
+Since 2021, cross-chain bridges have lost more than **$2.8 billion** to exploits (Wormhole, Ronin, Nomad, Multichain, Orbit). Existing insurance protocols run on Ethereum, gate claims behind a 14-day DAO vote, and don't cover Solana routes at all. OILSHIP is a Solana-native protocol that prices bridge risk in real time, pulls a 10 bps toll per transit, and pays principal back from the on-chain Wreck Fund in the same block when a covered bridge gets quarantined.
 
-OILSHIP is the answer that actually fits a Solana trader's life:
+## Features
 
-- **One toll, one decision, one transit.** You pay 10 bps and a tanker
-  carries your cargo through the strait.
-- **Same-block payouts.** If the watch engine flags the bridge while
-  your policy is open, you walk away with your principal in the same
-  block. No DAO vote. No claim form. The code pays.
-- **Owned by shareholders.** Holding `$OIL` is a share in the fleet,
-  the tolls and the Wreck Fund.
+| Feature | Status |
+|---|---|
+| Anchor program (`programs/oilship`) | stable |
+| Risk scoring engine (`watch`) | stable |
+| TypeScript SDK (`sdk`) | stable |
+| Operator CLI (`cli`) | beta |
+| Wreck Fund accounting (PDA) | stable |
+| Multi-bridge router | beta |
+| Same-block payout flow | stable |
+| Dark fleet (split + time-spaced) | alpha |
 
 ---
 
@@ -75,15 +71,14 @@ flowchart LR
   SP -- release --> WF
 ```
 
-The fleet is built from four pieces of software, all in this repo
-under `product/`:
+Four components, all in this repo:
 
-| Path | What it is | Stack |
+| Path | Component | Stack |
 |---|---|---|
-| `programs/oilship/` | The on-chain program. | Rust + Anchor |
-| `watch/`            | The monitoring engine. | Rust + Tokio |
-| `sdk/`              | The TypeScript SDK. Zero runtime deps. | TypeScript |
-| `cli/`              | The operator CLI. | Python + Typer |
+| `programs/oilship/` | On-chain program | Rust, Anchor 0.30, solana-program 1.18 |
+| `watch/`            | Risk scoring engine | Rust, Tokio, solana-client |
+| `sdk/`              | TypeScript SDK (zero runtime deps) | TypeScript, @solana/web3.js, @coral-xyz/anchor |
+| `cli/`              | Operator CLI | Python 3.12, Typer, anchorpy |
 
 ---
 
@@ -114,19 +109,30 @@ sequenceDiagram
   end
 ```
 
-The toll a user pays is the **base toll** (10 bps of cargo) multiplied
-by a **risk multiplier** read off the bridge's current score:
+The toll a user pays is the **base toll** (10 bps of cargo) multiplied by a **risk multiplier** read off the bridge's current score:
 
-| Score | Multiplier |
-|------:|-----------:|
-| 0–20  | 0.95×      |
-| 21–40 | 1.00×      |
-| 41–60 | 1.15×      |
-| 61–80 | 1.35×      |
-| 81+   | 1.90×      |
+| Score   | Multiplier | Tier   | State            |
+|---------|------------|--------|------------------|
+| 0-20    | 0.95x      | Tier 1 | primary route    |
+| 21-40   | 1.00x      | Tier 1 | normal           |
+| 41-60   | 1.15x      | Tier 2 | fallback         |
+| 61-80   | 1.35x      | Tier 3 | rate-limited     |
+| 81-100  | quarantine | block  | new policies revert |
 
-Above score 80, the bridge is **quarantined** and the protocol refuses
-to open new policies on it altogether.
+Above score 80, the bridge is quarantined and the program refuses to open new policies on it.
+
+## Performance
+
+| Metric                       | Value           |
+|------------------------------|-----------------|
+| Risk score recompute window  | 1s              |
+| Watch poll latency (p50)     | ~180ms          |
+| `open_policy` instruction CU | ~28k            |
+| `claim_payout` instruction CU| ~22k            |
+| Same-block payout latency    | 1 slot (~400ms) |
+| Wreck Fund accounting        | atomic per ix   |
+| Concurrent policies / bridge | unbounded       |
+| Coverage oversell guard      | hard revert     |
 
 ---
 
@@ -183,50 +189,71 @@ classDiagram
 
 ## Token economics
 
-`$OIL` is the company share. There is no governance theatre and no
-roadmap — the protocol does one thing and the share captures cashflow
-from that one thing.
+`$OIL` is the company share. The protocol does one thing and the share captures cashflow from that one thing.
 
 ```
-toll = bpsOf(cargo, 10) * risk_multiplier(score)
+toll = bps_of(cargo, 10) * risk_multiplier(score)
    |
-   +-- 60 % --> wreck_fund    (grows the coverage cap)
-   +-- 30 % --> $OIL buyback  (direct to holders)
-   +-- 10 % --> operations    (RPCs, signers, infra)
+   +-- 60% --> wreck_fund    (grows the coverage cap)
+   +-- 30% --> $OIL buyback  (direct to holders)
+   +-- 10% --> operations    (RPCs, signers, infra)
 ```
 
-| Quantity | How it is computed |
-|---|---|
-| **NAV**   | `wreck_fund + accrued_tolls − open_risk` |
-| **APR**   | `(tolls − payouts) / wreck_fund` |
-| **Floor** | `wreck_fund / circulating_supply` |
-| **TAM**   | Solana monthly bridge inflow, measurable on chain |
-
-There is no whitepaper. There is no fake metric.
+| Quantity | Formula                                            |
+|----------|----------------------------------------------------|
+| NAV      | `wreck_fund + accrued_tolls - open_risk`           |
+| APR      | `(tolls - payouts) / wreck_fund`                   |
+| Floor    | `wreck_fund / circulating_supply`                  |
+| TAM      | Solana monthly bridge inflow, measurable on chain  |
 
 ---
 
-## Repository layout
+## Project structure
 
 ```
 OILSHIP/
-├── Anchor.toml                workspace anchor manifest
+├── Anchor.toml                anchor workspace
 ├── Cargo.toml                 rust workspace
 ├── package.json               sdk workspace
+├── rust-toolchain.toml
 ├── README.md
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── CHANGELOG.md
-├── .github/workflows/ci.yml
+├── .github/workflows/
+│   └── ci.yml                 rust + sdk + cli + docs jobs
 ├── assets/
 │   ├── banner.png
 │   └── logo.png
-├── programs/oilship/          rust + anchor on-chain program
-├── watch/                     rust monitoring engine
-├── sdk/                       typescript sdk
-├── cli/                       python typer cli
-└── docs/architecture.md
+├── programs/oilship/src/
+│   ├── lib.rs                 program entrypoint
+│   ├── state.rs               GlobalConfig, Bridge, Policy, WreckFund, Treasury
+│   ├── errors.rs              custom error codes
+│   └── instructions/          initialize, register_bridge, update_risk,
+│                              open_policy, settle_policy, claim_payout
+├── watch/src/
+│   ├── main.rs                tokio runtime entrypoint
+│   ├── rpc.rs                 multi-RPC streaming
+│   ├── filters.rs             anomaly extractors (12 signals)
+│   ├── notifier.rs            risk score writer (update_risk caller)
+│   ├── http_api.rs            local query api
+│   ├── backfill.rs            historical replay
+│   └── admin_audit.rs         admin key + signer rotation tracker
+├── sdk/src/
+│   ├── client.ts              OilshipClient
+│   ├── escort.ts              quote, prepareOpen, openPolicy
+│   ├── pda.ts                 PDA derivation helpers
+│   ├── events.ts              event decoder
+│   ├── simulator.ts           dry-run risk + toll
+│   ├── receipts.ts            policy + payout receipts
+│   └── version.ts
+├── cli/oilship/
+│   ├── state/dump.py          oilship state dump <pubkey>
+│   ├── threat/simulate.py     oilship threat simulate scenario.json
+│   └── policy/inspect.py      oilship policy inspect <pubkey>
+└── docs/
+    └── architecture.md
 ```
 
 ---
@@ -255,36 +282,84 @@ Anchor 0.30+, Rust 1.78+, Node 20+, Python 3.12+.
 
 ---
 
-## Examples
+## Quick start
 
-### Quote a transit
+### Quote a transit (TypeScript SDK)
 
 ```ts
+import { Connection, PublicKey } from "@solana/web3.js";
 import { OilshipClient, Escort, solToLamports, pubkey } from "@oilship/sdk";
 
 const client = new OilshipClient({
-  rpcUrl: "https://api.mainnet-beta.solana.com",
-  programId: pubkey("11111111111111111111111111111111"),
+  connection: new Connection("https://api.mainnet-beta.solana.com"),
+  programId: pubkey("OILshipxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
 });
-const escort = new Escort(client, 10);
+
+const escort = new Escort(client, 10); // base toll, bps
 
 const quote = await escort.quote({
   cargo: solToLamports(1.5),
   preferredBridge: "mayan",
 });
-console.log(Escort.renderQuote(quote));
+// quote = {
+//   cargo: 1500000000,
+//   bridge: "mayan",
+//   riskScore: 18,
+//   tier: 1,
+//   tollLamports: 1425000,
+//   multiplier: 0.95,
+//   route: ["mayan"],
+//   coverageEarmark: 1500000000,
+// }
+
+const ix = await escort.prepareOpen(quote, walletPubkey);
+// returns a TransactionInstruction ready to sign + send
 ```
 
-### Watch a bridge
+### Read protocol state
+
+```ts
+const state = await client.getProtocolState();
+// state = {
+//   admin: "...",
+//   wreckFund: "...",
+//   tollBps: 10,
+//   fundSplitBps: 6000,
+//   buybackSplitBps: 3000,
+//   opsSplitBps: 1000,
+//   paused: false,
+// }
+
+const fund = await client.getWreckFund();
+// fund = {
+//   balance: 482730000000,
+//   openCoverage: 311500000000,
+//   solvency: 171230000000,   // balance - openCoverage
+//   lifetimePayouts: 0,
+// }
+```
+
+### Watch a bridge (Rust engine)
 
 ```bash
 oilship-watch sample mayan
+# polling mayan via 3 rpcs ...
+# tvl baseline 41200000 sol, holders 12873
+# admin key inspector ok
+# signer set hash 0x9fa1...c4b2 (stable 7d)
+# emitted score: 18 (tier 1, multiplier 0.95x)
 ```
 
-### Simulate a risk score
+### Simulate a risk scenario (CLI)
 
 ```bash
 oilship threat simulate ./scenario.json
+# bridge       : mayan
+# baseline     : 18
+# applied      : TvlDrop (high) + AdminKeyRotation (critical)
+# new score    : 84
+# verdict      : QUARANTINED (>= 81)
+# action       : new policies on mayan will revert
 ```
 
 `scenario.json`:
@@ -293,21 +368,31 @@ oilship threat simulate ./scenario.json
 {
   "bridge": "mayan",
   "anomalies": [
-    { "kind": "TvlDrop", "severity": "high", "message": "tvl down 27% in 24h", "source": "watch" },
-    { "kind": "AdminKeyRotation", "severity": "critical", "message": "admin key moved twice", "source": "watch" }
+    { "kind": "TvlDrop", "severity": "high", "message": "tvl down 27% in 24h" },
+    { "kind": "AdminKeyRotation", "severity": "critical", "message": "admin key moved twice" }
   ]
 }
 ```
 
 ---
 
+## Roadmap
+
+- [x] Anchor program: policies, Wreck Fund accounting, payouts
+- [x] Risk scoring engine with 12 signals
+- [x] TypeScript SDK with zero runtime deps
+- [x] Operator CLI (state inspection, threat simulation)
+- [x] Architecture docs and protocol notes
+- [ ] Mainnet program deployment
+- [ ] Wreck Fund seed ceremony (token raise)
+- [ ] Multi-bridge router live (mayan, debridge, wormhole, allbridge)
+- [ ] Capesize and Dark Fleet hull classes
+- [ ] Audit by an independent firm
+- [ ] Public dashboard for live risk scores
+
 ## Status
 
-OILSHIP is **pre-launch**. There are zero wrecks because there is zero
-exposure. The Wreck Fund is seeded at launch from the token raise, and
-the very first transit will be the team's own.
-
-Don't sail the strait alone.
+OILSHIP is **pre-launch**. The Wreck Fund is seeded at launch from the token raise, and the very first transit will be the team's own.
 
 ---
 

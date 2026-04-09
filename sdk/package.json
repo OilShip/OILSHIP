@@ -1,18 +1,44 @@
 {
   "name": "@oilship/sdk",
   "version": "0.1.0",
-  "description": "OILSHIP TypeScript SDK — escort bridge transits and read on-chain state",
+  "description": "OILSHIP TypeScript SDK. Escort bridge transits and read on-chain state on Solana.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist", "src"],
+  "homepage": "https://oilship.xyz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OilShip/OILSHIP.git",
+    "directory": "sdk"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "bridge",
+    "cross-chain",
+    "defi",
+    "insurance",
+    "oilship"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node --test ./tests/*.test.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": "^1.91.0",
+    "@coral-xyz/anchor": "^0.30.1"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
   },
   "exports": {
     ".": {
