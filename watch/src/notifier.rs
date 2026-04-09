@@ -80,3 +80,37 @@ impl Default for Notifier {
 mod tests {
     use super::*;
     use crate::types::BridgeId;
+
+    fn assess(bridge: &str, score: u8) -> RiskAssessment {
+        RiskAssessment {
+            bridge: BridgeId::new(bridge),
+            score,
+            tier: Tier::from_score(score),
+            computed_at: 0,
+            factors: vec![],
+        }
+    }
+
+    #[test]
+    fn first_observation_yields_message() {
+        let mut n = Notifier::new();
+        let msg = n.observe(&assess("mayan", 12));
+        assert!(msg.is_some());
+    }
+
+    #[test]
+    fn small_change_is_silent() {
+        let mut n = Notifier::new();
+        n.observe(&assess("mayan", 12));
+        let msg = n.observe(&assess("mayan", 13));
+        assert!(msg.is_none());
+    }
+
+    #[test]
+    fn tier_change_yields_message() {
+        let mut n = Notifier::new();
+        n.observe(&assess("mayan", 20));
+        let msg = n.observe(&assess("mayan", 90));
+        assert!(msg.is_some());
+    }
+}
