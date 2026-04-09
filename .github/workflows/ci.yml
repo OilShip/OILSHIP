@@ -61,3 +61,16 @@ jobs:
           test -f CHANGELOG.md && echo "changelog present"
           test -f SECURITY.md && echo "security policy present"
           test -f CODE_OF_CONDUCT.md && echo "code of conduct present"
+
+  community:
+    name: community
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: community files check
+        run: |
+          test -f .github/CODEOWNERS && echo "codeowners present"
+          test -f .github/dependabot.yml && echo "dependabot present"
+          test -f .github/FUNDING.yml && echo "funding present"
+          test -f .github/PULL_REQUEST_TEMPLATE.md && echo "pr template present"
+          test -d .github/ISSUE_TEMPLATE && echo "issue templates present"

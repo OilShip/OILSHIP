@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://oilship.xyz/docs/
+    about: Read the protocol architecture, mechanism, and SDK reference.
+  - name: Twitter
+    url: https://x.com/Oilship2026
+    about: Follow OILSHIP for updates and DM the team for security disclosures.

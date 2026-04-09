@@ -20,6 +20,15 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/OilShip/OILSHIP/releases"><img src="https://img.shields.io/github/v/release/OilShip/OILSHIP?style=flat-square&color=ff5b1f" alt="release"/></a>
+  <a href="https://github.com/OilShip/OILSHIP/commits/main"><img src="https://img.shields.io/github/last-commit/OilShip/OILSHIP?style=flat-square&color=1c1c1f" alt="last commit"/></a>
+  <a href="https://github.com/OilShip/OILSHIP/graphs/contributors"><img src="https://img.shields.io/github/contributors/OilShip/OILSHIP?style=flat-square&color=ff5b1f" alt="contributors"/></a>
+  <a href="https://github.com/OilShip/OILSHIP"><img src="https://img.shields.io/github/repo-size/OilShip/OILSHIP?style=flat-square&color=1c1c1f" alt="repo size"/></a>
+  <a href="https://github.com/OilShip/OILSHIP/issues"><img src="https://img.shields.io/github/issues/OilShip/OILSHIP?style=flat-square&color=ff5b1f" alt="issues"/></a>
+  <a href="https://github.com/OilShip/OILSHIP/stargazers"><img src="https://img.shields.io/github/stars/OilShip/OILSHIP?style=flat-square&color=1c1c1f" alt="stars"/></a>
+</p>
+
+<p align="center">
   <a href="https://oilship.xyz/">Website</a>
   &nbsp;·&nbsp;
   <a href="https://oilship.xyz/docs/">Docs</a>
