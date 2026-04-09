@@ -3,10 +3,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-oilship = "OILshipxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+oilship = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [programs.devnet]
-oilship = "OILshipxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+oilship = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [registry]
 url = "https://api.apr.dev"

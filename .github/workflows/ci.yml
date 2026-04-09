@@ -19,26 +19,33 @@ jobs:
           test -f Anchor.toml && echo "anchor manifest present"
           test -d programs/oilship && echo "anchor program present"
           test -d watch && echo "watch engine present"
+          test -f rust-toolchain.toml && echo "toolchain pinned"
 
   sdk:
     name: sdk
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./sdk
     steps:
       - uses: actions/checkout@v4
       - name: workspace check
         run: |
-          test -f package.json && echo "root package.json present"
-          test -f sdk/package.json && echo "sdk package.json present"
-          test -d sdk/src && echo "sdk source present"
+          test -f package.json && echo "sdk package.json present"
+          test -d src && echo "sdk source present"
+          test -f tsconfig.json && echo "tsconfig present"
 
   cli:
     name: cli
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cli
     steps:
       - uses: actions/checkout@v4
       - name: workspace check
         run: |
-          test -d cli && echo "cli present"
+          test -f pyproject.toml && echo "cli pyproject.toml present"
 
   docs:
     name: docs
@@ -53,3 +60,4 @@ jobs:
           test -f CONTRIBUTING.md && echo "contributing present"
           test -f CHANGELOG.md && echo "changelog present"
           test -f SECURITY.md && echo "security policy present"
+          test -f CODE_OF_CONDUCT.md && echo "code of conduct present"

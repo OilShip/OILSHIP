@@ -1,18 +1,33 @@
-![OILSHIP](./assets/banner.png)
+<p align="center">
+  <img src="./assets/banner.png" alt="OILSHIP"/>
+</p>
 
-[![website](https://img.shields.io/badge/website-oilship.xyz-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
-[![twitter](https://img.shields.io/badge/x-@Oilship2026-1c1c1f?style=for-the-badge&logo=x)](https://x.com/Oilship2026)
-[![github](https://img.shields.io/badge/github-OilShip%2FOILSHIP-ff5b1f?style=for-the-badge&logo=github)](https://github.com/OilShip/OILSHIP)
-[![ci](https://img.shields.io/github/actions/workflow/status/OilShip/OILSHIP/ci.yml?branch=main&style=for-the-badge&label=ci)](https://github.com/OilShip/OILSHIP/actions/workflows/ci.yml)
-[![license](https://img.shields.io/github/license/OilShip/OILSHIP?style=for-the-badge)](./LICENSE)
-[![status](https://img.shields.io/badge/status-pre--launch-1c1c1f?style=for-the-badge)](https://oilship.xyz/)
-[![chain](https://img.shields.io/badge/chain-solana-ff5b1f?style=for-the-badge)](https://solana.com)
-[![program](https://img.shields.io/badge/program-anchor-1c1c1f?style=for-the-badge)](https://www.anchor-lang.com/)
-[![sdk](https://img.shields.io/badge/sdk-typescript-ff5b1f?style=for-the-badge)](./sdk)
-[![watch](https://img.shields.io/badge/watch-rust-1c1c1f?style=for-the-badge)](./watch)
-[![ticker](https://img.shields.io/badge/ticker-%24OIL-ff5b1f?style=for-the-badge)](https://oilship.xyz/)
+<p align="center">
+  <a href="https://oilship.xyz/"><img src="https://img.shields.io/badge/website-oilship.xyz-ff5b1f?style=for-the-badge" alt="website"/></a>
+  <a href="https://x.com/Oilship2026"><img src="https://img.shields.io/badge/x-@Oilship2026-1c1c1f?style=for-the-badge&logo=x" alt="x"/></a>
+  <a href="https://github.com/OilShip/OILSHIP"><img src="https://img.shields.io/badge/github-OilShip%2FOILSHIP-ff5b1f?style=for-the-badge&logo=github" alt="github"/></a>
+  <a href="https://github.com/OilShip/OILSHIP/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/OilShip/OILSHIP/ci.yml?branch=main&style=for-the-badge&label=ci" alt="ci"/></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/github/license/OilShip/OILSHIP?style=for-the-badge" alt="license"/></a>
+</p>
 
-**Website** · [oilship.xyz](https://oilship.xyz/) &nbsp;·&nbsp; **X** · [@Oilship2026](https://x.com/Oilship2026) &nbsp;·&nbsp; **Code** · [github.com/OilShip/OILSHIP](https://github.com/OilShip/OILSHIP)
+<p align="center">
+  <a href="https://oilship.xyz/"><img src="https://img.shields.io/badge/status-pre--launch-1c1c1f?style=for-the-badge" alt="status"/></a>
+  <a href="https://solana.com"><img src="https://img.shields.io/badge/chain-solana-ff5b1f?style=for-the-badge" alt="chain"/></a>
+  <a href="https://www.anchor-lang.com/"><img src="https://img.shields.io/badge/program-anchor-1c1c1f?style=for-the-badge" alt="program"/></a>
+  <a href="./sdk"><img src="https://img.shields.io/badge/sdk-typescript-ff5b1f?style=for-the-badge" alt="sdk"/></a>
+  <a href="./watch"><img src="https://img.shields.io/badge/watch-rust-1c1c1f?style=for-the-badge" alt="watch"/></a>
+  <a href="https://oilship.xyz/"><img src="https://img.shields.io/badge/ticker-%24OIL-ff5b1f?style=for-the-badge" alt="ticker"/></a>
+</p>
+
+<p align="center">
+  <a href="https://oilship.xyz/">Website</a>
+  &nbsp;·&nbsp;
+  <a href="https://oilship.xyz/docs/">Docs</a>
+  &nbsp;·&nbsp;
+  <a href="https://x.com/Oilship2026">X</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/OilShip/OILSHIP">GitHub</a>
+</p>
 
 # OILSHIP
 
@@ -292,7 +307,7 @@ import { OilshipClient, Escort, solToLamports, pubkey } from "@oilship/sdk";
 
 const client = new OilshipClient({
   connection: new Connection("https://api.mainnet-beta.solana.com"),
-  programId: pubkey("OILshipxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+  programId: pubkey("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"),
 });
 
 const escort = new Escort(client, 10); // base toll, bps

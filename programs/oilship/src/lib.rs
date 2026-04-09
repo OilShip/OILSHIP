@@ -15,7 +15,7 @@ pub use errors::*;
 pub use state::*;
 pub use instructions::*;
 
-declare_id!("11111111111111111111111111111111");
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod oilship {
