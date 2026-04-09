@@ -376,20 +376,6 @@ oilship threat simulate ./scenario.json
 
 ---
 
-## Roadmap
-
-- [x] Anchor program: policies, Wreck Fund accounting, payouts
-- [x] Risk scoring engine with 12 signals
-- [x] TypeScript SDK with zero runtime deps
-- [x] Operator CLI (state inspection, threat simulation)
-- [x] Architecture docs and protocol notes
-- [ ] Mainnet program deployment
-- [ ] Wreck Fund seed ceremony (token raise)
-- [ ] Multi-bridge router live (mayan, debridge, wormhole, allbridge)
-- [ ] Capesize and Dark Fleet hull classes
-- [ ] Audit by an independent firm
-- [ ] Public dashboard for live risk scores
-
 ## Status
 
 OILSHIP is **pre-launch**. The Wreck Fund is seeded at launch from the token raise, and the very first transit will be the team's own.
