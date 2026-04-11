@@ -1,11 +1,18 @@
+[toolchain]
+anchor_version = "0.30.1"
+solana_version = "1.18.26"
+
 [features]
-seeds = false
+resolution = true
 skip-lint = false
 
 [programs.localnet]
 oilship = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [programs.devnet]
+oilship = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+
+[programs.mainnet]
 oilship = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [registry]

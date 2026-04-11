@@ -1,10 +1,14 @@
 [package]
 name = "oilship"
-version = "0.1.0"
-description = "OILSHIP on-chain program: bridge convoy escort, policies, Wreck Fund"
-edition = "2021"
-license = "MIT"
-authors = ["OILSHIP"]
+description = "OILSHIP on-chain program. Bridge convoy escort, policies, Wreck Fund."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -16,19 +20,10 @@ no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-anchor-lang = "0.30.1"
-anchor-spl = "0.30.1"
-solana-program = "1.18"
-spl-token = { version = "4.0", features = ["no-entrypoint"] }
-
-[profile.release]
-overflow-checks = true
-lto = "fat"
-codegen-units = 1
-
-[profile.release.build-override]
-opt-level = 3
-incremental = false
-codegen-units = 1
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+solana-program = { workspace = true }
+spl-token = { workspace = true }

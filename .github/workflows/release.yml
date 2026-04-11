@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: create github release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: extract tag
+        id: tag
+        run: echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.tag.outputs.name }}
+          body_path: CHANGELOG.md
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

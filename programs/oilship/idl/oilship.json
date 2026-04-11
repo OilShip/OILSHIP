@@ -1,0 +1,198 @@
+{
+  "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+  "metadata": {
+    "name": "oilship",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "OILSHIP on-chain program. Bridge convoy escort, policies, Wreck Fund."
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "accounts": [
+        { "name": "admin", "writable": true, "signer": true },
+        { "name": "global_config", "writable": true },
+        { "name": "wreck_fund", "writable": true },
+        { "name": "treasury", "writable": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "toll_bps", "type": "u16" },
+        { "name": "fund_split_bps", "type": "u16" },
+        { "name": "buyback_split_bps", "type": "u16" },
+        { "name": "ops_split_bps", "type": "u16" }
+      ]
+    },
+    {
+      "name": "register_bridge",
+      "discriminator": [38, 41, 19, 218, 88, 130, 58, 148],
+      "accounts": [
+        { "name": "admin", "writable": true, "signer": true },
+        { "name": "global_config" },
+        { "name": "bridge", "writable": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "symbol", "type": "string" },
+        { "name": "operator", "type": "pubkey" },
+        { "name": "tier", "type": "u8" }
+      ]
+    },
+    {
+      "name": "update_risk",
+      "discriminator": [26, 207, 196, 84, 199, 18, 50, 77],
+      "accounts": [
+        { "name": "keeper", "signer": true },
+        { "name": "bridge", "writable": true }
+      ],
+      "args": [
+        { "name": "score", "type": "u8" }
+      ]
+    },
+    {
+      "name": "open_policy",
+      "discriminator": [194, 11, 82, 22, 81, 247, 198, 124],
+      "accounts": [
+        { "name": "beneficiary", "writable": true, "signer": true },
+        { "name": "global_config" },
+        { "name": "bridge", "writable": true },
+        { "name": "wreck_fund", "writable": true },
+        { "name": "treasury", "writable": true },
+        { "name": "policy", "writable": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "cargo", "type": "u64" },
+        { "name": "lifetime_slots", "type": "u64" }
+      ]
+    },
+    {
+      "name": "settle_policy",
+      "discriminator": [221, 184, 238, 95, 132, 17, 8, 174],
+      "accounts": [
+        { "name": "beneficiary", "writable": true, "signer": true },
+        { "name": "bridge", "writable": true },
+        { "name": "wreck_fund", "writable": true },
+        { "name": "policy", "writable": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_payout",
+      "discriminator": [126, 224, 233, 129, 175, 14, 164, 25],
+      "accounts": [
+        { "name": "beneficiary", "writable": true, "signer": true },
+        { "name": "bridge" },
+        { "name": "wreck_fund", "writable": true },
+        { "name": "policy", "writable": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalConfig",
+      "discriminator": [149, 8, 156, 202, 160, 252, 176, 217]
+    },
+    {
+      "name": "Bridge",
+      "discriminator": [231, 232, 31, 98, 110, 3, 23, 59]
+    },
+    {
+      "name": "Policy",
+      "discriminator": [222, 135, 7, 163, 235, 177, 33, 68]
+    },
+    {
+      "name": "WreckFund",
+      "discriminator": [114, 84, 254, 38, 181, 13, 242, 118]
+    },
+    {
+      "name": "Treasury",
+      "discriminator": [238, 239, 123, 238, 89, 1, 168, 253]
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "Paused", "msg": "Protocol is paused" },
+    { "code": 6001, "name": "BridgeQuarantined", "msg": "Bridge is quarantined" },
+    { "code": 6002, "name": "InsufficientSolvency", "msg": "WreckFund cannot oversell coverage" },
+    { "code": 6003, "name": "PolicyExpired", "msg": "Policy lifetime has elapsed" },
+    { "code": 6004, "name": "PolicyAlreadyClosed", "msg": "Policy is not in open state" },
+    { "code": 6005, "name": "BridgeNotRoutable", "msg": "Bridge is not routable" },
+    { "code": 6006, "name": "InvalidSplits", "msg": "Toll split bps must sum to 10000" },
+    { "code": 6007, "name": "Unauthorized", "msg": "Caller is not authorized" }
+  ],
+  "types": [
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "admin", "type": "pubkey" },
+          { "name": "wreck_fund", "type": "pubkey" },
+          { "name": "treasury", "type": "pubkey" },
+          { "name": "toll_bps", "type": "u16" },
+          { "name": "fund_split_bps", "type": "u16" },
+          { "name": "buyback_split_bps", "type": "u16" },
+          { "name": "ops_split_bps", "type": "u16" },
+          { "name": "paused", "type": "bool" }
+        ]
+      }
+    },
+    {
+      "name": "Bridge",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "symbol", "type": "string" },
+          { "name": "operator", "type": "pubkey" },
+          { "name": "risk_score", "type": "u8" },
+          { "name": "tier", "type": "u8" },
+          { "name": "routable", "type": "bool" },
+          { "name": "quarantined", "type": "bool" },
+          { "name": "open_policies", "type": "u32" },
+          { "name": "open_coverage", "type": "u64" }
+        ]
+      }
+    },
+    {
+      "name": "Policy",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "beneficiary", "type": "pubkey" },
+          { "name": "bridge", "type": "pubkey" },
+          { "name": "cargo", "type": "u64" },
+          { "name": "toll_paid", "type": "u64" },
+          { "name": "risk_at_open", "type": "u8" },
+          { "name": "class", "type": "u8" },
+          { "name": "state", "type": "u8" },
+          { "name": "opened_slot", "type": "u64" },
+          { "name": "lifetime_slots", "type": "u64" }
+        ]
+      }
+    },
+    {
+      "name": "WreckFund",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "pubkey" },
+          { "name": "balance", "type": "u64" },
+          { "name": "open_coverage", "type": "u64" },
+          { "name": "lifetime_payouts", "type": "u64" }
+        ]
+      }
+    },
+    {
+      "name": "Treasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "pubkey" },
+          { "name": "balance", "type": "u64" }
+        ]
+      }
+    }
+  ]
+}

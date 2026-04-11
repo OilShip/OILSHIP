@@ -1,0 +1,14 @@
+target/
+node_modules/
+sdk/dist/
+sdk/node_modules/
+**/__pycache__/
+**/*.pyc
+.git/
+.github/
+.vscode/
+.idea/
+docs/
+tests/
+.env
+.env.local
